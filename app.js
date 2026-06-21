@@ -14,6 +14,7 @@ import {
   renderCategoryHealthMarkup,
   renderCategoryOptionsMarkup,
 } from './src/js/categories.js';
+import { renderDashboardHealth } from './src/js/dashboard.js';
 
 const ROUTES = ['login', 'dashboard', 'expense-log', 'analytics', 'settings'];
 
@@ -134,15 +135,14 @@ function renderCategoryOptions(categories) {
 function renderDashboardPreview() {
   renderCategoryOptions(PREVIEW_CATEGORIES);
   renderCategoryHealthList(PREVIEW_CATEGORIES);
-  setCategoryState(
-    {
-      count: 3,
-      totalBudget: 13500,
-      totalSpent: 10250,
-      totalRemaining: 3250,
-    },
-    'preview'
-  );
+  const mockSummary = {
+    count: 3,
+    totalBudget: 13500,
+    totalSpent: 10250,
+    totalRemaining: 3250,
+  };
+  setCategoryState(mockSummary, 'preview');
+  renderDashboardHealth(mockSummary, 'budget-health-panel');
 }
 
 async function hydrateCategoryData({ force = false } = {}) {
@@ -152,6 +152,7 @@ async function hydrateCategoryData({ force = false } = {}) {
     renderCategoryOptions(categories);
     renderCategoryHealthList(categories);
     setCategoryState(summary, source);
+    renderDashboardHealth(summary, 'budget-health-panel');
     setSyncMessage('Connected to Google Sheets');
   } catch (error) {
     console.error('Failed to load category data', error);
