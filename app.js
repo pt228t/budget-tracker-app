@@ -15,6 +15,8 @@ import {
   renderCategoryOptionsMarkup,
 } from './src/js/categories.js';
 import { renderDashboardHealth } from './src/js/dashboard.js';
+import { initExpenseLogger } from './src/js/expense-logger.js';
+import { initAnalytics } from './src/js/analytics.js';
 
 const ROUTES = ['login', 'dashboard', 'expense-log', 'analytics', 'settings'];
 
@@ -153,6 +155,8 @@ async function hydrateCategoryData({ force = false } = {}) {
     renderCategoryHealthList(categories);
     setCategoryState(summary, source);
     renderDashboardHealth(summary, 'budget-health-panel');
+    initExpenseLogger('expense-log-form', 'recent-transactions-list');
+    initAnalytics('analytics-container');
     setSyncMessage('Connected to Google Sheets');
   } catch (error) {
     console.error('Failed to load category data', error);

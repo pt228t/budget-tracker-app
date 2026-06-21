@@ -137,14 +137,14 @@
               <h2>Quick Expense Log</h2>
               <span class="status-pill">B-007 ready next</span>
             </div>
-            <div class="form-shell-grid">
+            <form id="expense-log-form" class="form-shell-grid">
               <div class="form-group">
                 <label class="form-label" for="vendor">Vendor</label>
-                <input class="form-control" id="vendor" type="text" placeholder="Metro Cash and Carry" />
+                <input class="form-control" id="vendor" name="vendor" type="text" placeholder="Metro Cash and Carry" />
               </div>
               <div class="form-group">
                 <label class="form-label" for="amount">Amount</label>
-                <input class="form-control" id="amount" type="number" placeholder="450" />
+                <input class="form-control" id="amount" name="amount" type="number" placeholder="450" />
               </div>
               <div class="form-group">
                 <label class="form-label" for="category">Category</label>
@@ -154,35 +154,29 @@
               </div>
               <div class="form-group">
                 <label class="form-label" for="payment-source">Payment Source</label>
-                <select class="form-control" id="payment-source">
+                <select class="form-control" id="payment-source" name="payment-source">
                   <option>Joint Account</option>
                   <option>Personal Payment</option>
                 </select>
               </div>
+              <div class="form-actions mt-4 col-span-2">
+                <button type="submit" class="btn btn-primary w-full">Log Expense</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="card section-panel section-panel-wide mt-4">
+            <div class="panel-header">
+              <h2>Recent Transactions</h2>
             </div>
+            <ul id="recent-transactions-list" class="list-group">
+            </ul>
           </article>
         </section>
 
         <section class="page-section" data-page="analytics" hidden>
-          <div class="detail-grid">
-            <article class="card section-panel">
-              <div class="panel-header">
-                <h2>Trend Views</h2>
-                <span class="status-pill">M4 placeholders</span>
-              </div>
-              <ul class="notes-list">
-                <li>Month-over-month variance</li>
-                <li>Weekly spend heatmap</li>
-                <li>Recurring payment trendline</li>
-              </ul>
-            </article>
-            <article class="card section-panel">
-              <div class="panel-header">
-                <h2>Chart Surface</h2>
-                <span class="status-pill status-pill-muted">CDN linked</span>
-              </div>
-              <canvas id="analytics-chart" height="180" aria-label="Analytics preview"></canvas>
-            </article>
+          <div id="analytics-container">
+            <p>Loading analytics...</p>
           </div>
         </section>
 

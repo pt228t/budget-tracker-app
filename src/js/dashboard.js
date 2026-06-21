@@ -1,4 +1,4 @@
-import { formatCurrencyINR } from './utils.js';
+import { formatCurrencyINR } from '../../utils.js';
 
 export function renderDashboardHealth(summary, elementId) {
   const container = document.getElementById(elementId);
