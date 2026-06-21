@@ -15,7 +15,7 @@
  */
 
 import { getAccessToken } from './auth.js';
-import { SPREADSHEET_ID, readRange, appendRow } from './sheets-api.js';
+import { getSpreadsheetId, setSpreadsheetId, appendRow } from './sheets-api.js';
 
 // ─── Schema Definition ───────────────────────────────────────────────────────
 
@@ -90,8 +90,18 @@ export async function bootstrapSpreadsheet() {
   const report = { ready: false, created: [], existing: [], errors: [] };
 
   try {
-    // 1. Fetch current tabs from the spreadsheet
-    const existingTabs = await getExistingTabs();
+    // 1. Check if we have an ID
+    let spreadsheetId = getSpreadsheetId();
+
+    if (!spreadsheetId) {
+      console.log('[Setup] No spreadsheet ID found. Creating entirely new BudgetPulse workbook...');
+      spreadsheetId = await createNewWorkbook();
+      setSpreadsheetId(spreadsheetId);
+      console.log(`[Setup] Workbook created with ID: ${spreadsheetId}`);
+    }
+
+    // 2. Fetch current tabs from the spreadsheet
+    const existingTabs = await getExistingTabs(spreadsheetId);
 
     // 2. Determine which tabs are missing
     const missingTabs = REQUIRED_TABS.filter(tab => !existingTabs.includes(tab));
@@ -105,10 +115,10 @@ export async function bootstrapSpreadsheet() {
 
     console.log(`[Setup] Missing tabs: ${missingTabs.join(', ')}. Bootstrapping...`);
 
-    // 3. Create missing tabs via batchUpdate
-    await createTabs(missingTabs);
+    // 4. Create missing tabs via batchUpdate
+    await createTabs(spreadsheetId, missingTabs);
 
-    // 4. Write headers and defaults for each new tab
+    // 5. Write headers and defaults for each new tab
     for (const tabName of missingTabs) {
       try {
         await writeHeaders(tabName, SCHEMA[tabName].headers);
@@ -138,11 +148,37 @@ export async function bootstrapSpreadsheet() {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
+ * Create a brand new Google Sheet workbook.
+ */
+async function createNewWorkbook() {
+  const token = getAccessToken();
+  const url = `https://sheets.googleapis.com/v4/spreadsheets`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      properties: { title: 'BudgetPulse' }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to create workbook: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.spreadsheetId;
+}
+
+/**
  * Get list of existing tab names from the spreadsheet metadata.
  */
-async function getExistingTabs() {
+async function getExistingTabs(spreadsheetId) {
   const token = getAccessToken();
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?fields=sheets.properties.title`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties.title`;
 
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` }
@@ -159,9 +195,9 @@ async function getExistingTabs() {
 /**
  * Create multiple tabs in a single batchUpdate call.
  */
-async function createTabs(tabNames) {
+async function createTabs(spreadsheetId, tabNames) {
   const token = getAccessToken();
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
 
   const requests = tabNames.map(title => ({
     addSheet: {
@@ -190,9 +226,10 @@ async function createTabs(tabNames) {
  * Write header row to a tab.
  */
 async function writeHeaders(tabName, headers) {
+  const spreadsheetId = getSpreadsheetId();
   const token = getAccessToken();
   const range = `${tabName}!A1:${columnLetter(headers.length)}1`;
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
 
   const response = await fetch(url, {
     method: 'PUT',
@@ -240,8 +277,11 @@ function columnLetter(num) {
  * Lightweight check without creating anything.
  */
 export async function isSpreadsheetReady() {
+  const spreadsheetId = getSpreadsheetId();
+  if (!spreadsheetId) return false;
+
   try {
-    const existingTabs = await getExistingTabs();
+    const existingTabs = await getExistingTabs(spreadsheetId);
     const missingTabs = REQUIRED_TABS.filter(tab => !existingTabs.includes(tab));
     return missingTabs.length === 0;
   } catch {

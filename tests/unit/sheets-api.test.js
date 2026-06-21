@@ -5,6 +5,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// Set up localStorage mock for the spreadsheet ID
+global.localStorage = {
+  getItem: vi.fn(() => 'MOCK_SPREADSHEET_ID'),
+  setItem: vi.fn()
+};
+
 // Mock auth.js before importing sheets-api so the module sees the mock
 vi.mock('../../src/js/auth.js', () => ({
   getAccessToken: vi.fn(() => 'fake-token'),

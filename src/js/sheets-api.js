@@ -16,11 +16,20 @@ import { getAccessToken } from './auth.js';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 
-// Fill this in once the BudgetPulse Google Sheet is created (B-001).
-// Stored here rather than hardcoded per-call so there's one place to change it.
-export const SPREADSHEET_ID = 'YOUR_BUDGETPULSE_SPREADSHEET_ID';
+// The ID is now dynamic and set by setup.js upon auto-creation.
+export function getSpreadsheetId() {
+  return localStorage.getItem('bp_spreadsheet_id');
+}
 
-const BASE_URL = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`;
+export function setSpreadsheetId(id) {
+  localStorage.setItem('bp_spreadsheet_id', id);
+}
+
+function getBaseUrl() {
+  const id = getSpreadsheetId();
+  if (!id) throw new Error("Spreadsheet ID not set. Bootstrap required.");
+  return `https://sheets.googleapis.com/v4/spreadsheets/${id}`;
+}
 
 const RETRY_DELAYS_MS = [1000, 2000, 4000];
 
@@ -143,7 +152,7 @@ async function _request(url, options = {}) {
  * @returns {Promise<Array[]>}
  */
 export async function readRange(range) {
-  const url = `${BASE_URL}/values/${encodeURIComponent(range)}`;
+  const url = `${getBaseUrl()}/values/${encodeURIComponent(range)}`;
   const data = await _request(url, { method: 'GET' });
   return data?.values ?? [];
 }
@@ -157,7 +166,7 @@ export async function readRange(range) {
  */
 export async function batchGet(ranges) {
   const params = ranges.map(r => `ranges=${encodeURIComponent(r)}`).join('&');
-  const url = `${BASE_URL}/values:batchGet?${params}`;
+  const url = `${getBaseUrl()}/values:batchGet?${params}`;
   const data = await _request(url, { method: 'GET' });
   return (data?.valueRanges ?? []).map(vr => vr.values ?? []);
 }
@@ -170,7 +179,7 @@ export async function batchGet(ranges) {
  * @returns {Promise<void>}
  */
 export async function appendRow(range, values) {
-  const url = `${BASE_URL}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+  const url = `${getBaseUrl()}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
   await _request(url, {
     method: 'POST',
     body: JSON.stringify({ values: [values] }),
@@ -186,7 +195,7 @@ export async function appendRow(range, values) {
  * @returns {Promise<void>}
  */
 export async function updateRow(range, values) {
-  const url = `${BASE_URL}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
+  const url = `${getBaseUrl()}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
   await _request(url, {
     method: 'PUT',
     body: JSON.stringify({ values: [values] }),
@@ -213,7 +222,7 @@ export async function updateCell(range, value) {
  * @returns {Promise<void>}
  */
 export async function deleteRow(sheetName, sheetId, rowIndex) {
-  const url = `${BASE_URL}:batchUpdate`;
+  const url = `${getBaseUrl()}:batchUpdate`;
   await _request(url, {
     method: 'POST',
     body: JSON.stringify({
@@ -238,7 +247,7 @@ export async function deleteRow(sheetName, sheetId, rowIndex) {
  * @returns {Promise<{ sheets: Array<{ properties: { sheetId: number, title: string } }> }>}
  */
 export async function getSpreadsheetMetadata() {
-  const url = `${BASE_URL}?fields=sheets.properties`;
+  const url = `${getBaseUrl()}?fields=sheets.properties(sheetId,title)`;
   return _request(url, { method: 'GET' });
 }
 

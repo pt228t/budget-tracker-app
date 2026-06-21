@@ -8,7 +8,8 @@ vi.mock('../../src/js/auth.js', () => ({
 
 // Mock sheets-api.js
 vi.mock('../../src/js/sheets-api.js', () => ({
-  SPREADSHEET_ID: 'MOCK_SPREADSHEET_ID',
+  getSpreadsheetId: vi.fn(() => 'MOCK_SPREADSHEET_ID'),
+  setSpreadsheetId: vi.fn(),
   readRange: vi.fn(),
   appendRow: vi.fn().mockResolvedValue({})
 }));
