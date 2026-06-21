@@ -192,6 +192,13 @@ export function rollbackTransaction(month, transactionId) {
   }
 }
 
+export function updateTransactionInCache(month, txnId, updatedRow) {
+  const entry = _txnCache.get(month);
+  if (!entry) return;
+  const idx = entry.rows.findIndex(r => String(r[0]) === String(txnId));
+  if (idx !== -1) entry.rows[idx] = updatedRow;
+}
+
 // ─── Vendor Patterns (localStorage) ──────────────────────────────────────────
 
 /**

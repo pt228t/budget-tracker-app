@@ -9,8 +9,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('../../src/js/sheets-api.js', () => ({
-  readRange:  vi.fn().mockResolvedValue([]),
-  appendRow:  vi.fn().mockResolvedValue(undefined),
+  readRange:      vi.fn().mockResolvedValue([]),
+  appendRow:      vi.fn().mockResolvedValue(undefined),
+  updateRow:      vi.fn().mockResolvedValue(undefined),
+  deleteRow:      vi.fn().mockResolvedValue(undefined),
+  resolveSheetId: vi.fn().mockResolvedValue(0),
   getAccessToken: vi.fn(() => 'fake-token'),
 }));
 
@@ -19,6 +22,7 @@ vi.mock('../../src/js/cache.js', () => ({
   setTransactionsCache:        vi.fn(),
   optimisticAppendTransaction: vi.fn(),
   rollbackTransaction:         vi.fn(),
+  updateTransactionInCache:    vi.fn(),
   suggestCategory:             vi.fn(() => null),
   recordVendorPattern:         vi.fn(),
 }));
@@ -31,6 +35,7 @@ import {
   buildTransactionRow,
   validateForm,
   renderTransactionItem,
+  findTransactionRowIndex,
 } from '../../src/js/expense-logger.js';
 
 import {
@@ -291,5 +296,58 @@ describe('optimistic transaction flow', () => {
     }
 
     expect(rollbackTransaction).toHaveBeenCalledWith(month, 'txn_2');
+  });
+});
+
+// ─── renderTransactionItem — action buttons ────────────────────────────────────
+
+describe('renderTransactionItem action buttons', () => {
+  const ROW = ['txn_abc', '2026-06-21', '2026-06', 850, 'cat_groc', 'Vegetables', 'Big Bazaar', 'prashant@gmail.com', 'Joint', 'prashant@gmail.com', '2026-06-21T18:00:00', '2026-06-21T18:00:00', ''];
+  const CATS = { 'cat_groc': 'Groceries' };
+
+  it('contains an edit button with data-action="edit"', () => {
+    const html = renderTransactionItem(ROW, CATS);
+    expect(html).toContain('data-action="edit"');
+  });
+
+  it('contains a delete button with data-action="delete"', () => {
+    const html = renderTransactionItem(ROW, CATS);
+    expect(html).toContain('data-action="delete"');
+  });
+
+  it('action buttons carry the transaction id', () => {
+    const html = renderTransactionItem(ROW, CATS);
+    expect(html.match(/data-action="edit"[^>]*data-txn-id="txn_abc"|data-txn-id="txn_abc"[^>]*data-action="edit"/)).toBeTruthy();
+  });
+});
+
+// ─── findTransactionRowIndex ───────────────────────────────────────────────────
+
+describe('findTransactionRowIndex', () => {
+  const ALL_ROWS = [
+    ['transaction_id', 'date', 'month'],       // header — index 0 → sheet row 1
+    ['txn_001', '2026-06-01', '2026-06'],      // index 1 → sheet row 2
+    ['txn_002', '2026-06-02', '2026-06'],      // index 2 → sheet row 3
+    ['txn_003', '2026-06-03', '2026-06'],      // index 3 → sheet row 4
+  ];
+
+  it('returns 1-based sheet row for txn_001 (first data row)', () => {
+    expect(findTransactionRowIndex('txn_001', ALL_ROWS)).toBe(2);
+  });
+
+  it('returns 1-based sheet row for txn_003 (third data row)', () => {
+    expect(findTransactionRowIndex('txn_003', ALL_ROWS)).toBe(4);
+  });
+
+  it('returns -1 when txnId not found', () => {
+    expect(findTransactionRowIndex('txn_999', ALL_ROWS)).toBe(-1);
+  });
+
+  it('returns -1 for empty rows array', () => {
+    expect(findTransactionRowIndex('txn_001', [])).toBe(-1);
+  });
+
+  it('does not match the header row (index 0)', () => {
+    expect(findTransactionRowIndex('transaction_id', ALL_ROWS)).toBe(-1);
   });
 });

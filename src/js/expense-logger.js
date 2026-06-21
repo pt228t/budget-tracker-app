@@ -12,12 +12,13 @@
  */
 
 import { getAccessToken } from './auth.js';
-import { appendRow, readRange } from './sheets-api.js';
+import { appendRow, readRange, updateRow, deleteRow, resolveSheetId } from './sheets-api.js';
 import {
   getTransactionsCache,
   setTransactionsCache,
   optimisticAppendTransaction,
   rollbackTransaction,
+  updateTransactionInCache,
   suggestCategory,
   recordVendorPattern,
 } from './cache.js';
@@ -60,8 +61,9 @@ export async function initExpenseLogger(formId, listId) {
   _injectMissingFields(form);
   _wireVendorSuggestion(form);
   _wireSubmit(form, listEl);
+  _wireListActions(listEl);
 
-  await _loadRecentTransactions(listEl, _buildCategoryMap());
+  await _loadRecentTransactions(listEl);
 }
 
 // ─── Form Enhancement ─────────────────────────────────────────────────────────
@@ -189,7 +191,7 @@ async function _handleSubmit(form, listEl) {
   const month = row[TC.MONTH];
 
   optimisticAppendTransaction(month, row);
-  _prependTransactionRow(listEl, row, _buildCategoryMap());
+  _prependTransactionRow(listEl, row);
 
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving…'; }
 
@@ -216,7 +218,7 @@ async function _handleSubmit(form, listEl) {
 
 // ─── Recent Transactions ──────────────────────────────────────────────────────
 
-async function _loadRecentTransactions(listEl, catMap) {
+async function _loadRecentTransactions(listEl) {
   const today = new Date();
   const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
@@ -236,7 +238,7 @@ async function _loadRecentTransactions(listEl, catMap) {
     }
   }
 
-  _renderTransactionsList(listEl, rows, catMap);
+  _renderTransactionsList(listEl, rows, _buildCategoryMap());
 }
 
 function _renderTransactionsList(listEl, rows, catMap) {
@@ -252,10 +254,10 @@ function _renderTransactionsList(listEl, rows, catMap) {
   listEl.innerHTML = sorted.map(r => renderTransactionItem(r, catMap)).join('');
 }
 
-function _prependTransactionRow(listEl, row, catMap) {
+function _prependTransactionRow(listEl, row) {
   const emptyMsg = listEl.querySelector('p.text-muted');
   if (emptyMsg) emptyMsg.remove();
-  listEl.insertAdjacentHTML('afterbegin', renderTransactionItem(row, catMap));
+  listEl.insertAdjacentHTML('afterbegin', renderTransactionItem(row, _buildCategoryMap()));
 }
 
 function _removeTransactionRow(listEl, txnId) {
@@ -334,6 +336,7 @@ export function validateForm(data) {
 export function renderTransactionItem(row, catMap) {
   const txnId   = String(row[TC.ID]);
   const date    = String(row[TC.DATE]);
+  const month   = String(row[TC.MONTH]);
   const amount  = Number(row[TC.AMOUNT]);
   const catId   = String(row[TC.CATEGORY_ID]);
   const desc    = String(row[TC.DESCRIPTION]);
@@ -342,7 +345,7 @@ export function renderTransactionItem(row, catMap) {
 
   const fundingClass = funding === 'Joint' ? 'badge-joint' : 'badge-personal';
 
-  return `<div class="transaction-item" data-txn-id="${_esc(txnId)}">
+  return `<div class="transaction-item" data-txn-id="${_esc(txnId)}" data-month="${_esc(month)}">
   <div class="transaction-item__left">
     <span class="transaction-item__desc">${_esc(desc)}</span>
     <span class="transaction-item__meta">
@@ -351,8 +354,194 @@ export function renderTransactionItem(row, catMap) {
       &middot; <time datetime="${_esc(date)}">${_esc(date)}</time>
     </span>
   </div>
-  <div class="transaction-item__amount">₹${amount.toLocaleString('en-IN')}</div>
+  <div class="transaction-item__right">
+    <div class="transaction-item__amount">₹${amount.toLocaleString('en-IN')}</div>
+    <div class="transaction-item__actions">
+      <button type="button" class="btn-icon" data-action="edit" data-txn-id="${_esc(txnId)}" aria-label="Edit transaction">✎</button>
+      <button type="button" class="btn-icon btn-icon--danger" data-action="delete" data-txn-id="${_esc(txnId)}" aria-label="Delete transaction">✕</button>
+    </div>
+  </div>
 </div>`;
+}
+
+/**
+ * Finds the 1-based sheet row number for a transaction by its ID.
+ * allRows[0] is the header (sheet row 1), allRows[1] is first data (sheet row 2), etc.
+ *
+ * @param {string} txnId
+ * @param {Array[]} allRows  Full result of readRange(TRANSACTIONS_RANGE) including header
+ * @returns {number}  1-based row number, or -1 if not found
+ */
+export function findTransactionRowIndex(txnId, allRows) {
+  for (let i = 1; i < allRows.length; i++) {
+    if (String(allRows[i][0]) === String(txnId)) return i + 1;
+  }
+  return -1;
+}
+
+// ─── Edit / Delete ────────────────────────────────────────────────────────────
+
+function _wireListActions(listEl) {
+  listEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const txnId  = btn.dataset.txnId;
+    const itemEl = btn.closest('[data-txn-id]');
+    if (!txnId || !itemEl) return;
+
+    if (btn.dataset.action === 'delete') {
+      await _handleDelete(txnId, itemEl);
+    } else if (btn.dataset.action === 'edit') {
+      _handleEdit(txnId, itemEl);
+    }
+  });
+}
+
+async function _handleDelete(txnId, itemEl) {
+  if (!window.confirm('Delete this expense?')) return;
+
+  itemEl.style.opacity = '0.4';
+  itemEl.style.pointerEvents = 'none';
+
+  try {
+    const allRows = await readRange(TRANSACTIONS_RANGE);
+    const rowNum  = findTransactionRowIndex(txnId, allRows);
+    if (rowNum === -1) throw new Error('Transaction not found in sheet');
+
+    const txRow   = allRows.find(r => String(r[0]) === String(txnId));
+    const month   = txRow ? String(txRow[TC.MONTH]) : itemEl.dataset.month || _getCurrentMonth();
+
+    const sheetId = await resolveSheetId('Transactions');
+    await deleteRow('Transactions', sheetId, rowNum);
+
+    rollbackTransaction(month, txnId);
+    itemEl.remove();
+    _showToast('Expense deleted.');
+
+  } catch (err) {
+    itemEl.style.opacity = '';
+    itemEl.style.pointerEvents = '';
+    console.error('[BudgetPulse] Delete failed:', err);
+    _showToast('Delete failed. Try again.');
+  }
+}
+
+function _handleEdit(txnId, itemEl) {
+  const month = itemEl.dataset.month || _getCurrentMonth();
+  const cachedRows = getTransactionsCache(month) || [];
+  const row = cachedRows.find(r => String(r[0]) === String(txnId));
+
+  if (!row) {
+    _showToast('Cannot edit: data not in cache. Reload page.');
+    return;
+  }
+
+  const catMap = _buildCategoryMap();
+  const categoryOptions = Object.entries(catMap)
+    .map(([id, name]) => `<option value="${_esc(id)}"${id === String(row[TC.CATEGORY_ID]) ? ' selected' : ''}>${_esc(name)}</option>`)
+    .join('');
+
+  itemEl.innerHTML = `
+    <form class="txn-edit-form" style="width:100%;padding:4px 0;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <label class="form-label" style="font-size:0.75rem;">Amount</label>
+          <input class="form-control" name="amount" type="number" value="${Number(row[TC.AMOUNT])}" min="0.01" step="0.01" required style="height:32px;" />
+        </div>
+        <div>
+          <label class="form-label" style="font-size:0.75rem;">Category</label>
+          <select class="form-control" name="categoryId" style="height:32px;">${categoryOptions}</select>
+        </div>
+        <div>
+          <label class="form-label" style="font-size:0.75rem;">Description</label>
+          <input class="form-control" name="description" type="text" value="${_esc(String(row[TC.DESCRIPTION]))}" required style="height:32px;" />
+        </div>
+        <div>
+          <label class="form-label" style="font-size:0.75rem;">Sub-category</label>
+          <input class="form-control" name="subCategory" type="text" value="${_esc(String(row[TC.SUB_CATEGORY] || ''))}" style="height:32px;" />
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" class="btn btn-xs" data-action="cancel-edit">Cancel</button>
+        <button type="submit" class="btn btn-xs btn-primary">Save</button>
+      </div>
+    </form>
+  `;
+
+  const form = itemEl.querySelector('form');
+
+  form.querySelector('[data-action="cancel-edit"]').addEventListener('click', () => {
+    const restored = document.createElement('div');
+    restored.innerHTML = renderTransactionItem(row, _buildCategoryMap());
+    itemEl.replaceWith(restored.firstElementChild);
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await _handleEditSave(txnId, row, form, itemEl);
+  });
+}
+
+async function _handleEditSave(txnId, originalRow, form, itemEl) {
+  const saveBtn = form.querySelector('[type="submit"]');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving…';
+
+  const amount      = parseFloat(form.querySelector('[name="amount"]').value);
+  const categoryId  = form.querySelector('[name="categoryId"]').value;
+  const description = form.querySelector('[name="description"]').value.trim();
+  const subCategory = form.querySelector('[name="subCategory"]').value.trim();
+
+  const { valid, errors } = validateForm({ amount: String(amount), categoryId, description });
+  if (!valid) {
+    _showToast(errors[0].message);
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+    return;
+  }
+
+  const updatedRow = [
+    originalRow[TC.ID],
+    originalRow[TC.DATE],
+    originalRow[TC.MONTH],
+    amount,
+    categoryId,
+    subCategory,
+    description,
+    originalRow[TC.PAID_BY],
+    originalRow[TC.FUNDING_SOURCE],
+    originalRow[TC.LOGGED_BY],
+    originalRow[TC.LOGGED_AT],
+    _toTimestamp(new Date()),
+    originalRow[TC.NOTES],
+  ];
+
+  try {
+    const allRows = await readRange(TRANSACTIONS_RANGE);
+    const rowNum  = findTransactionRowIndex(txnId, allRows);
+    if (rowNum === -1) throw new Error('Transaction not found');
+
+    await updateRow(`Transactions!A${rowNum}:M${rowNum}`, updatedRow);
+
+    updateTransactionInCache(String(originalRow[TC.MONTH]), txnId, updatedRow);
+
+    const restored = document.createElement('div');
+    restored.innerHTML = renderTransactionItem(updatedRow, _buildCategoryMap());
+    itemEl.replaceWith(restored.firstElementChild);
+
+    _showToast('Expense updated ✓');
+
+  } catch (err) {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+    console.error('[BudgetPulse] Edit save failed:', err);
+    _showToast('Save failed. Try again.');
+  }
+}
+
+function _getCurrentMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 // ─── User Email ───────────────────────────────────────────────────────────────

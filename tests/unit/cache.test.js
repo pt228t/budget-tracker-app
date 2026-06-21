@@ -20,7 +20,7 @@ import {
   setSubCategoriesCache, getSubCategoriesCache, clearSubCategoriesCache,
   // Transactions
   setTransactionsCache, getTransactionsCache, clearTransactionsCache,
-  optimisticAppendTransaction, rollbackTransaction,
+  optimisticAppendTransaction, rollbackTransaction, updateTransactionInCache,
   // Vendor patterns
   getVendorPatterns, recordVendorPattern, suggestCategory, clearVendorPatterns,
   // Write queue
@@ -284,5 +284,40 @@ describe('clearSessionCaches', () => {
     expect(getSubCategoriesCache()).toBeNull();
     // Vendor patterns survive sign-out
     expect(getVendorPatterns()['amazon']).toBeDefined();
+  });
+});
+
+// ─── updateTransactionInCache ────────────────────────────────────────────────
+
+describe('updateTransactionInCache', () => {
+  beforeEach(() => {
+    setTransactionsCache('2026-06', [
+      ['txn_001', '2026-06-01', '2026-06', 500, 'cat_a'],
+      ['txn_002', '2026-06-02', '2026-06', 200, 'cat_b'],
+    ]);
+  });
+
+  it('replaces matching row with updated values', () => {
+    const updated = ['txn_001', '2026-06-01', '2026-06', 999, 'cat_x'];
+    updateTransactionInCache('2026-06', 'txn_001', updated);
+    const rows = getTransactionsCache('2026-06');
+    expect(rows[0][3]).toBe(999);
+    expect(rows[0][4]).toBe('cat_x');
+  });
+
+  it('leaves other rows untouched', () => {
+    updateTransactionInCache('2026-06', 'txn_001', ['txn_001', '', '', 1]);
+    const rows = getTransactionsCache('2026-06');
+    expect(rows[1][0]).toBe('txn_002');
+  });
+
+  it('is no-op when month not in cache', () => {
+    expect(() => updateTransactionInCache('2025-01', 'txn_001', [])).not.toThrow();
+  });
+
+  it('is no-op when txnId not found in month', () => {
+    updateTransactionInCache('2026-06', 'txn_999', ['txn_999']);
+    const rows = getTransactionsCache('2026-06');
+    expect(rows).toHaveLength(2);
   });
 });
