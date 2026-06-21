@@ -7,6 +7,7 @@ import {
 } from './utils.js';
 import { initAuth, isUserAuthenticated, signOut } from './src/js/auth.js';
 import { onTokenExpired } from './src/js/sheets-api.js';
+import { bootstrapSpreadsheet } from './src/js/setup.js';
 import { clearSessionCaches } from './src/js/cache.js';
 import {
   loadCategoryBundle,
@@ -260,10 +261,17 @@ function initializeIcons() {
   }
 }
 
-function handleAuthSuccess() {
+async function handleAuthSuccess() {
   updateAuthControls();
-  setRoute('dashboard');
-  hydrateCategoryData({ force: true });
+  setSyncMessage('Checking BudgetPulse spreadsheet...');
+  try {
+    await bootstrapSpreadsheet();
+    setRoute('dashboard');
+    hydrateCategoryData({ force: true });
+    setSyncMessage('Ready');
+  } catch (err) {
+    setSyncMessage('Setup failed: ' + err.message);
+  }
 }
 
 function handleAuthFailure() {
@@ -283,8 +291,14 @@ function initializeIntegrations() {
 
   if (isUserAuthenticated()) {
     updateAuthControls();
-    setRoute('dashboard');
-    hydrateCategoryData();
+    setSyncMessage('Checking BudgetPulse spreadsheet...');
+    bootstrapSpreadsheet().then(() => {
+      setRoute('dashboard');
+      hydrateCategoryData();
+      setSyncMessage('Ready');
+    }).catch(err => {
+      setSyncMessage('Setup failed: ' + err.message);
+    });
   } else {
     updateAuthControls();
   }
