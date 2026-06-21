@@ -157,6 +157,16 @@ export function buildCategoryHealthModels(categories = []) {
 export function renderCategoryHealthMarkup(categories = [], limit = 5) {
   const models = buildCategoryHealthModels(categories).slice(0, limit);
 
+  if (models.length === 0) {
+    return `
+      <li class="card shell-card" style="text-align: center; padding: 32px 16px;">
+        <i data-lucide="inbox" style="width: 32px; height: 32px; margin: 0 auto 12px; color: var(--color-gray-400);"></i>
+        <p class="text-secondary" style="margin-bottom: 8px;">No budget categories found.</p>
+        <p class="text-muted" style="font-size: 0.875rem;">Categories will appear here once the nightly sync runs or when you manually add them to your Google Sheet.</p>
+      </li>
+    `;
+  }
+
   return models
     .map(
       (model) => `

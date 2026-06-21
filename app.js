@@ -120,6 +120,7 @@ function renderCategoryHealthList(categories) {
   }
 
   list.innerHTML = renderCategoryHealthMarkup(categories);
+  initializeIcons();
 }
 
 function renderCategoryOptions(categories) {
