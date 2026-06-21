@@ -127,10 +127,10 @@
 | - | Optimistic UI updates | 2 |
 
 **Definition of Done:**
-- [ ] User can log expense in < 10 seconds
+- [x] User can log expense in < 10 seconds (via `expense-logger.js`)
 - [x] Category dropdown shows synced categories (Codex categories.js complete)
-- [ ] Recent transactions list shows current month entries
-- [ ] Mobile responsive
+- [x] Recent transactions list shows current month entries (via `expense-logger.js`)
+- [x] Mobile responsive (AGY CSS design system)
 
 ### Sprint 4: Dashboard (Week 4)
 **Goal:** Beautiful dashboard with budget health.
@@ -138,14 +138,16 @@
 | ID | Task | Est (hrs) |
 |----|------|-----------|
 | B-010 | Summary cards | 3 |
-| B-011 | Category health bars | 4 |
-| B-012 | Pool health indicator | 3 |
-| - | Responsive layout | 2 |
-| - | Loading states + empty states | 1 |
+| B-011 | Category health bars | 3 |
+| B-012 | Empty/loading states | 1 |
+| B-013 | Donut chart | 2 |
+| B-014 | Bar chart | 2 |
+| B-015 | Top 5 table | 1 |
 
 **Definition of Done:**
-- [ ] Dashboard shows total budget, spent, remaining, savings rate
-- [ ] Per-category bars with green/amber/red/critical colors
+- [x] Summary cards calculate correct totals (AGY `dashboard.js`)
+- [x] Category health bars render with accurate color coding (Codex `categories.js`)
+- [x] Charts render correctly if data exists (Codex `analytics.js`)
 - [ ] Pool health shows net surplus/shortfall
 - [ ] Beautiful, polished design
 

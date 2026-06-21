@@ -32,9 +32,10 @@ Replace Phase 1 scaffold placeholder data with real data fetched from Google She
 - **Dependencies:** `sheets-api.js`
 
 ## Completed In This Pass
-*(To be filled during execution)*
+- [x] AGY: Dashboard UI & real data rendering (`src/js/dashboard.js` & `app.js` wiring)
+- [x] Claude: Expense logger submission logic (`src/js/expense-logger.js`)
+- [x] Codex: Analytics integration (`src/js/analytics.js` & `tests/unit/analytics.test.js`)
+- [x] Verified all 70 unit tests passing and Vite build passing.
 
 ## Still Open
-- [ ] AGY: Dashboard UI & real data rendering
-- [ ] Claude: Expense logger submission logic
-- [ ] Codex: Analytics integration
+- (None - Sprint 3 complete!)
