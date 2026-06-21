@@ -151,7 +151,7 @@ function updateAuthUI() {
 // Global click delegation for Auth actions
 document.addEventListener('click', (e) => {
   // "Sign in with Google" button on the hero panel
-  if (e.target.matches('[data-go-route="dashboard"]') && e.target.textContent.includes('Sign in')) {
+  if (e.target.matches('[data-auth-action="signin"]')) {
     e.preventDefault(); // Prevent direct routing until auth finishes
     signIn();
   }
