@@ -148,19 +148,8 @@ graph TD
 | 3 | ✅ Render category dropdown component |
 | 4 | ✅ Support on-the-fly sub-category creation |
 
-> ⚠️ **Integration gap — Codex action required (2026-06-21):**
-> `tests/e2e/auth.spec.js` fails because `main.js` never calls `initAuth()`.
-> `auth.js` (AGY) correctly reads stored `bp_access_token` in `setupClient()`,
-> but `setupClient()` is only reached via `initAuth(onSuccess, onFailure)`.
-> **Fix:** Add to `src/js/main.js`:
-> ```js
-> import { initAuth } from './auth.js';
-> initAuth(
->   () => { window.location.hash = 'dashboard'; },
->   () => { window.location.hash = 'login'; }
-> );
-> ```
-> This unblocks the E2E auth test and wires the full auth → dashboard flow.
+> ✅ **Integration gap resolved (2026-06-21):**
+> AGY stepped in and wired `bootstrapSpreadsheet()` and `initAuth()` into `app.js` to unblock testing and deployment.
 
 ---
 
@@ -212,7 +201,7 @@ graph TD
 
 | Phase | 🚀 AGY | 🧠 Claude | ⚡ Codex |
 |-------|---------|-----------|----------|
-| **Phase 1** (S1) | CSS Design System ✅ DONE | Apps Script Backend ✅ DONE | Frontend Scaffold + Test Infra |
+| **Phase 1** (S1) | CSS Design System ✅ DONE | Apps Script Backend ✅ DONE | Frontend Scaffold + Test Infra ✅ DONE |
 | **Phase 2** (S2) | OAuth Module ✅ DONE | Sheets API + Cache ✅ DONE | Categories Module ✅ DONE |
 | **Phase 3** (S3-4) | Dashboard | Expense Logger | Analytics Charts |
 
@@ -242,8 +231,8 @@ PHASE 1 — kick off all 3 simultaneously
 
 PHASE 2 — kick off all 3 simultaneously
   ├── ✅ 🚀 AGY:   "Build Google OAuth module in src/js/auth.js." (DONE)
-  ├── 🧠 Claude: "Build Sheets API wrapper + cache layer."
-  └── ⚡ Codex:  "Build categories module in src/js/categories.js."
+  ├── ✅ 🧠 Claude: "Build Sheets API wrapper + cache layer." (DONE)
+  └── ✅ ⚡ Codex:  "Build categories module in src/js/categories.js." (DONE)
   
   WAIT → all 3 done → commit + merge
 

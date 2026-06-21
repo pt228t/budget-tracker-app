@@ -128,7 +128,7 @@
 
 **Definition of Done:**
 - [ ] User can log expense in < 10 seconds
-- [ ] Category dropdown shows synced categories
+- [x] Category dropdown shows synced categories (Codex categories.js complete)
 - [ ] Recent transactions list shows current month entries
 - [ ] Mobile responsive
 
