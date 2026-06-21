@@ -110,7 +110,7 @@
 | - | Error handling + offline queue | 2 |
 
 **Definition of Done:**
-- [ ] Sign in with Google works
+- [x] Sign in with Google works (AGY auth.js complete, awaiting Codex app.js wiring)
 - [ ] App reads Budget_Categories and displays them
 - [ ] App can write a test row to Transactions
 - [ ] Unauthorized users see "access denied"

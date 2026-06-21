@@ -106,10 +106,13 @@ graph TD
 
 | # | Task |
 |---|------|
-| 1 | Google Identity Services integration — init, sign-in, sign-out |
-| 2 | Token management — store, refresh, expiry handling |
-| 3 | Authorization check — read `allowed_users` from `App_Config`, gate access |
-| 4 | UI state — show/hide login screen, user avatar, sign-out button |
+| 1 | ✅ Google Identity Services integration — init, sign-in, sign-out |
+| 2 | ✅ Token management — store, refresh, expiry handling |
+| 3 | ✅ Authorization check — read `allowed_users` from `App_Config`, gate access |
+| 4 | ✅ UI state — show/hide login screen, user avatar, sign-out button |
+
+**Status Update (2026-06-21):** AGY has completed `src/js/auth.js` and `tests/unit/auth.test.js`. 
+*Note for Codex:* Please add `import { initAuth } from './src/js/auth.js'` to `app.js` and initialize it so the Auth flow and E2E tests are activated.
 
 ### 🧠 Claude → Sheets API Wrapper + Cache Layer
 **Files:** `src/js/sheets-api.js`, `src/js/cache.js`
@@ -188,7 +191,7 @@ graph TD
 | Phase | 🚀 AGY | 🧠 Claude | ⚡ Codex |
 |-------|---------|-----------|----------|
 | **Phase 1** (S1) | CSS Design System ✅ DONE | Apps Script Backend ✅ DONE | Frontend Scaffold + Test Infra |
-| **Phase 2** (S2) | OAuth Module | Sheets API + Cache | Categories Module |
+| **Phase 2** (S2) | OAuth Module ✅ DONE | Sheets API + Cache | Categories Module |
 | **Phase 3** (S3-4) | Dashboard | Expense Logger | Analytics Charts |
 
 ---
