@@ -3,3 +3,8 @@ dist/
 playwright-report/
 test-results/
 .DS_Store
+
+# Private / Internal tracking
+.serena/
+.codebase-memory/
+.agile/
