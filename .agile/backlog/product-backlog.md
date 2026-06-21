@@ -32,9 +32,9 @@
 | B-007 | Frontend: Expense logging form (quick-add) | Logging | M2 | S3 | `DONE` |
 | B-008 | Frontend: Category dropdown (from Budget_Categories) | Logging | M2 | S3 | `DONE` |
 | B-009 | Frontend: Recent transactions list (current month) | Logging | M2 | S3 | `DONE` |
-| B-010 | Frontend: Dashboard summary cards | Dashboard | M2 | S4 | `TODO` |
-| B-011 | Frontend: Per-category budget health bars | Dashboard | M2 | S4 | `TODO` |
-| B-012 | Frontend: Pool health indicator (net position) | Dashboard | M2 | S4 | `TODO` |
+| B-010 | Frontend: Dashboard summary cards | Dashboard | M2 | S4 | `DONE` |
+| B-011 | Frontend: Per-category budget health bars | Dashboard | M2 | S4 | `DONE` |
+| B-012 | Frontend: Pool health indicator (net position) | Dashboard | M2 | S4 | `DONE` |
 
 ### 🟡 P1 — Should Have
 
@@ -43,8 +43,8 @@
 | B-013 | Frontend: Category donut chart (Chart.js) | Analytics | M3 | S5 | `TODO` |
 | B-014 | Frontend: Budget vs Actual bar chart | Analytics | M3 | S5 | `TODO` |
 | B-015 | Frontend: Monthly trend line (6 months) | Analytics | M3 | S5 | `TODO` |
-| B-016 | Frontend: Sub-category tagging in expense form | Logging | M3 | S5 | `TODO` |
-| B-017 | Vendor pattern suggestion engine | Logging | M3 | S6 | `TODO` |
+| B-016 | Frontend: Sub-category tagging in expense form | Logging | M3 | S5 | `DONE` |
+| B-017 | Vendor pattern suggestion engine | Logging | M3 | S6 | `DONE` |
 | B-018 | Frontend: Edit/delete transactions | Logging | M3 | S6 | `TODO` |
 | B-019 | Frontend: Month-over-month comparison | Analytics | M3 | S6 | `TODO` |
 | B-020 | Frontend: Top 5 expenses table | Analytics | M3 | S6 | `TODO` |
@@ -139,7 +139,7 @@
 |----|------|-----------|
 | B-010 | Summary cards | 3 |
 | B-011 | Category health bars | 3 |
-| B-012 | Frontend: Empty/loading states | Dashboard | M2 | S4 | `TODO` |
+| B-037 | Frontend: Empty/loading states | Dashboard | M2 | S4 | `TODO` |
 | B-013 | Frontend: Donut chart | Analytics | M3 | S4 | `DONE` |
 | B-014 | Frontend: Bar chart | Analytics | M3 | S4 | `DONE` |
 | B-015 | Frontend: Top 5 table | Analytics | M3 | S4 | `DONE` |
@@ -169,7 +169,7 @@
 
 | ID | Task | Est (hrs) |
 |----|------|-----------|
-| B-012 | Dashboard empty/loading states | 2 |
+| B-037 | Dashboard empty/loading states | 2 |
 | B-018 | Edit/delete transactions | 4 |
 | B-016 | Sub-category tagging | 2 |
 | B-017 | Vendor suggestion engine | 2 |
