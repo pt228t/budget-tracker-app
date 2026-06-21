@@ -18,5 +18,5 @@ test('switches between the scaffold pages', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Analytics' }).click();
   await expect(page.getByTestId('current-view')).toHaveText('Analytics');
-  await expect(page.locator('#analytics-chart')).toBeVisible();
+  await expect(page.locator('#analytics-container')).toBeVisible();
 });
