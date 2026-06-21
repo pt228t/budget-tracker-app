@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta
+      name="description"
+      content="BudgetPulse SPA scaffold for Google Sheets budgeting, expense logging, analytics, and settings."
+    />
+    <title>BudgetPulse | Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/css/variables.css" />
+    <link rel="stylesheet" href="/src/css/base.css" />
+    <link rel="stylesheet" href="/src/css/components.css" />
+    <link rel="stylesheet" href="/src/css/responsive.css" />
+    <link rel="stylesheet" href="/src/css/app-shell.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body>
+    <header class="shell-topbar">
+      <div class="container shell-topbar-inner">
+        <div>
+          <p class="shell-eyebrow">BudgetPulse</p>
+          <h1 class="shell-brand" data-testid="app-title">Google Sheets Budget Tracker</h1>
+        </div>
+        <nav class="shell-nav" aria-label="Primary">
+          <button class="shell-nav-link active" type="button" data-route="login">Login</button>
+          <button class="shell-nav-link" type="button" data-route="dashboard">Dashboard</button>
+          <button class="shell-nav-link" type="button" data-route="expense-log">Expense Log</button>
+          <button class="shell-nav-link" type="button" data-route="analytics">Analytics</button>
+          <button class="shell-nav-link" type="button" data-route="settings">Settings</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <div class="container shell-layout">
+        <section class="shell-status card">
+          <div>
+            <p class="shell-label">Current View</p>
+            <h2 data-current-view data-testid="current-view">Login</h2>
+          </div>
+          <div class="shell-status-meta">
+            <p class="text-secondary">Session Seed</p>
+            <p class="fw-semibold" data-id-seed>bp-session</p>
+            <p class="text-secondary">Today</p>
+            <p class="fw-semibold" data-today>21 Jun 2026</p>
+          </div>
+        </section>
+
+        <section class="page-section" data-page="login" data-testid="login-shell">
+          <div class="shell-hero">
+            <article class="card hero-panel">
+              <div class="sync-status">
+                <span class="status-dot" aria-hidden="true"></span>
+                <span>Awaiting OAuth and Sheets connection</span>
+              </div>
+              <h2>Sign in shell for Google OAuth and Sheets access</h2>
+              <p class="text-secondary">
+                This is the entry point for browser auth, API initialization, and
+                session wiring before data hydration.
+              </p>
+              <div class="shell-actions">
+                <button class="btn btn-primary" type="button" data-go-route="dashboard">
+                  Sign in with Google
+                </button>
+                <button class="btn btn-outline" type="button" data-go-route="settings">
+                  View Setup Notes
+                </button>
+              </div>
+            </article>
+
+            <aside class="card hero-panel hero-panel-accent">
+              <p class="shell-label">What unlocks next</p>
+              <ul class="checklist" data-testid="checklist">
+                <li class="checklist-item">Google OAuth browser flow</li>
+                <li class="checklist-item">Sheets read and write wrappers</li>
+                <li class="checklist-item">Category hydration from Budget_Categories</li>
+                <li class="checklist-item">Expense logging under ten seconds</li>
+              </ul>
+            </aside>
+          </div>
+        </section>
+
+        <section class="page-section" data-page="dashboard" hidden>
+          <div class="overview-grid" aria-label="Overview placeholders">
+            <article class="card shell-card" data-testid="overview-card">
+              <p class="shell-label">Monthly Budget</p>
+              <h3 class="shell-value" data-budget-amount>INR 0</h3>
+              <p class="text-secondary">Backed by Budget_Categories after auth.</p>
+            </article>
+            <article class="card shell-card" data-testid="overview-card">
+              <p class="shell-label">Spent This Month</p>
+              <h3 class="shell-value" data-spent-amount>INR 0</h3>
+              <p class="text-secondary">Will update from Transactions rows.</p>
+            </article>
+            <article class="card shell-card" data-testid="overview-card">
+              <p class="shell-label">Sync Status</p>
+              <h3 class="shell-value">Disconnected</h3>
+              <p class="text-secondary">Sheets wrapper lands in B-006.</p>
+            </article>
+          </div>
+
+          <div class="detail-grid">
+            <article class="card section-panel">
+              <div class="panel-header">
+                <h2>Budget Health</h2>
+                <span class="status-pill">FR-3 shell</span>
+              </div>
+              <div class="placeholder-stack">
+                <div class="placeholder-chip">Remaining Budget</div>
+                <div class="placeholder-chip">Savings Rate</div>
+                <div class="placeholder-chip">Pool Health</div>
+              </div>
+            </article>
+            <article class="card section-panel">
+              <div class="panel-header">
+                <h2>Category Progress</h2>
+                <span class="status-pill status-pill-muted">Chart.js ready</span>
+              </div>
+              <div class="placeholder-stack">
+                <div class="placeholder-line placeholder-line-lg"></div>
+                <div class="placeholder-line"></div>
+                <div class="placeholder-line"></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page-section" data-page="expense-log" hidden>
+          <article class="card section-panel section-panel-wide">
+            <div class="panel-header">
+              <h2>Quick Expense Log</h2>
+              <span class="status-pill">B-007 ready next</span>
+            </div>
+            <div class="form-shell-grid">
+              <div class="form-group">
+                <label class="form-label" for="vendor">Vendor</label>
+                <input class="form-control" id="vendor" type="text" placeholder="Metro Cash and Carry" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="amount">Amount</label>
+                <input class="form-control" id="amount" type="number" placeholder="450" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="category">Category</label>
+                <input class="form-control" id="category" type="text" placeholder="Groceries" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="payment-source">Payment Source</label>
+                <select class="form-control" id="payment-source">
+                  <option>Joint Account</option>
+                  <option>Personal Payment</option>
+                </select>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="page-section" data-page="analytics" hidden>
+          <div class="detail-grid">
+            <article class="card section-panel">
+              <div class="panel-header">
+                <h2>Trend Views</h2>
+                <span class="status-pill">M4 placeholders</span>
+              </div>
+              <ul class="notes-list">
+                <li>Month-over-month variance</li>
+                <li>Weekly spend heatmap</li>
+                <li>Recurring payment trendline</li>
+              </ul>
+            </article>
+            <article class="card section-panel">
+              <div class="panel-header">
+                <h2>Chart Surface</h2>
+                <span class="status-pill status-pill-muted">CDN linked</span>
+              </div>
+              <canvas id="analytics-chart" height="180" aria-label="Analytics preview"></canvas>
+            </article>
+          </div>
+        </section>
+
+        <section class="page-section" data-page="settings" hidden>
+          <article class="card section-panel section-panel-wide">
+            <div class="panel-header">
+              <h2>Setup and Integration Notes</h2>
+              <span class="status-pill status-pill-muted">Phase 1 handoff</span>
+            </div>
+            <ul class="notes-list">
+              <li>Static hosting target is GitHub Pages using Vite build output.</li>
+              <li>OAuth will stay in browser session storage.</li>
+              <li>Sheets API wrapper will own reads and appends.</li>
+              <li>Apps Script sync remains separate from the static frontend.</li>
+            </ul>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
