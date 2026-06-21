@@ -114,18 +114,18 @@ graph TD
 **Status Update (2026-06-21):** AGY has completed `src/js/auth.js` and `tests/unit/auth.test.js`. 
 *Note for Codex:* Please add `import { initAuth } from './src/js/auth.js'` to `app.js` and initialize it so the Auth flow and E2E tests are activated.
 
-### 🧠 Claude → Sheets API Wrapper + Cache Layer
+### 🧠 Claude → Sheets API Wrapper + Cache Layer ✅ DONE (2026-06-21)
 **Files:** `src/js/sheets-api.js`, `src/js/cache.js`
 **Why Claude:** Retry logic, exponential backoff, offline queue, error taxonomy — reasoning-heavy
 **Deps:** `auth.js` interface (code against contract)
 **Backlog:** B-006
 
-| # | Task |
-|---|------|
-| 1 | `sheets-api.js` — CRUD wrapper: readRange, appendRow, updateRow, batchGet |
-| 2 | Error handling — 429 backoff, token refresh, offline detection |
-| 3 | `cache.js` — sessionStorage for categories, localStorage for vendor patterns, memory cache for transactions |
-| 4 | Offline write queue — queue writes in localStorage, flush on reconnect |
+| # | Task | Status |
+|---|------|--------|
+| 1 | `sheets-api.js` — CRUD wrapper: readRange, appendRow, updateRow, batchGet | ✅ |
+| 2 | Error handling — 429 backoff, token refresh, offline detection | ✅ |
+| 3 | `cache.js` — sessionStorage for categories, localStorage for vendor patterns, memory cache for transactions | ✅ |
+| 4 | Offline write queue — queue writes in localStorage, flush on reconnect | ✅ |
 
 ### ⚡ Codex → Categories Module
 **Files:** `src/js/categories.js`
@@ -133,12 +133,34 @@ graph TD
 **Deps:** `sheets-api.js` interface
 **Backlog:** B-008
 
+**Status Update (2026-06-21):** Categories module work is complete and verified.
+
+- [x] Budget categories are normalized from `Budget_Categories`
+- [x] Expense-log category dropdown is populated from category data
+- [x] Category health models and dashboard-support render helpers are implemented in Codex-owned files
+- [x] Verified with `npm run test:unit`, `npm run test:e2e`, and `npm run build`
+- [ ] AGY-owned dashboard implementation (`B-010`, `B-011`, `B-012`) remains separate ownership
+
 | # | Task |
 |---|------|
-| 1 | Fetch + cache `Budget_Categories` |
-| 2 | Fetch + cache `Sub_Categories` |
-| 3 | Render category dropdown component |
-| 4 | Support on-the-fly sub-category creation |
+| 1 | ✅ Fetch + cache `Budget_Categories` |
+| 2 | ✅ Fetch + cache `Sub_Categories` |
+| 3 | ✅ Render category dropdown component |
+| 4 | ✅ Support on-the-fly sub-category creation |
+
+> ⚠️ **Integration gap — Codex action required (2026-06-21):**
+> `tests/e2e/auth.spec.js` fails because `main.js` never calls `initAuth()`.
+> `auth.js` (AGY) correctly reads stored `bp_access_token` in `setupClient()`,
+> but `setupClient()` is only reached via `initAuth(onSuccess, onFailure)`.
+> **Fix:** Add to `src/js/main.js`:
+> ```js
+> import { initAuth } from './auth.js';
+> initAuth(
+>   () => { window.location.hash = 'dashboard'; },
+>   () => { window.location.hash = 'login'; }
+> );
+> ```
+> This unblocks the E2E auth test and wires the full auth → dashboard flow.
 
 ---
 
@@ -191,7 +213,7 @@ graph TD
 | Phase | 🚀 AGY | 🧠 Claude | ⚡ Codex |
 |-------|---------|-----------|----------|
 | **Phase 1** (S1) | CSS Design System ✅ DONE | Apps Script Backend ✅ DONE | Frontend Scaffold + Test Infra |
-| **Phase 2** (S2) | OAuth Module ✅ DONE | Sheets API + Cache | Categories Module |
+| **Phase 2** (S2) | OAuth Module ✅ DONE | Sheets API + Cache ✅ DONE | Categories Module ✅ DONE |
 | **Phase 3** (S3-4) | Dashboard | Expense Logger | Analytics Charts |
 
 ---

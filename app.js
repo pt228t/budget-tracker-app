@@ -5,6 +5,14 @@ import {
   qs,
   qsa,
 } from './utils.js';
+import { initAuth, isUserAuthenticated, signOut } from './src/js/auth.js';
+import { onTokenExpired } from './src/js/sheets-api.js';
+import { clearSessionCaches } from './src/js/cache.js';
+import {
+  loadCategoryBundle,
+  renderCategoryHealthMarkup,
+  renderCategoryOptionsMarkup,
+} from './src/js/categories.js';
 
 const ROUTES = ['login', 'dashboard', 'expense-log', 'analytics', 'settings'];
 
@@ -15,6 +23,13 @@ const ROUTE_TITLES = {
   analytics: 'Analytics',
   settings: 'Settings',
 };
+
+const DEFAULT_SYNC_MESSAGE = 'Awaiting OAuth and Sheets connection';
+const PREVIEW_CATEGORIES = [
+  { category: 'Groceries', monthlyBudget: 8000, spent: 6400, remaining: 1600, utilization: 0.8 },
+  { category: 'Transport', monthlyBudget: 2500, spent: 1150, remaining: 1350, utilization: 0.46 },
+  { category: 'Dining Out', monthlyBudget: 3000, spent: 2700, remaining: 300, utilization: 0.9 },
+];
 
 function getRouteFromHash(hash = window.location.hash) {
   const route = hash.replace(/^#/, '').trim();
@@ -46,11 +61,121 @@ function updateRoute(route) {
   document.title = `BudgetPulse | ${ROUTE_TITLES[route]}`;
 }
 
+function updateAuthControls() {}
+
+function setSyncMessage(message) {
+  const statusText = qs('.sync-status span:last-child');
+  if (statusText) {
+    statusText.textContent = message;
+  }
+}
+
+function setCategoryState(summary, source = 'sheet') {
+  const categoryCount = qs('[data-category-count]');
+  const categorySource = qs('[data-category-source]');
+  const categoryStatus = qs('[data-category-status]');
+  const spentAmount = qs('[data-spent-amount]');
+  const budgetAmount = qs('[data-budget-amount]');
+  const remainingAmount = qs('[data-remaining-amount]');
+
+  if (categoryCount) {
+    categoryCount.textContent = `${summary.count} categories`;
+  }
+
+  if (categorySource) {
+    categorySource.textContent =
+      source === 'cache'
+        ? 'Loaded from local cache until the next live refresh.'
+        : 'Loaded from Google Sheets category data.';
+  }
+
+  if (categoryStatus) {
+    categoryStatus.textContent =
+      source === 'cache'
+        ? 'Showing cached category health while waiting for a live refresh.'
+        : 'Live category health loaded from Google Sheets.';
+  }
+
+  if (spentAmount) {
+    spentAmount.textContent = formatCurrencyINR(summary.totalSpent);
+  }
+
+  if (budgetAmount) {
+    budgetAmount.textContent = formatCurrencyINR(summary.totalBudget);
+  }
+
+  if (remainingAmount) {
+    remainingAmount.textContent = formatCurrencyINR(summary.totalRemaining);
+  }
+}
+
+function renderCategoryHealthList(categories) {
+  const list = qs('[data-testid="category-health-list"]');
+  if (!list) {
+    return;
+  }
+
+  list.innerHTML = renderCategoryHealthMarkup(categories);
+}
+
+function renderCategoryOptions(categories) {
+  const select = qs('#category');
+  if (!select) {
+    return;
+  }
+
+  select.innerHTML = `
+    <option value="">Select a category</option>
+    ${renderCategoryOptionsMarkup(categories)}
+  `;
+}
+
+function renderDashboardPreview() {
+  renderCategoryOptions(PREVIEW_CATEGORIES);
+  renderCategoryHealthList(PREVIEW_CATEGORIES);
+  setCategoryState(
+    {
+      count: 3,
+      totalBudget: 13500,
+      totalSpent: 10250,
+      totalRemaining: 3250,
+    },
+    'preview'
+  );
+}
+
+async function hydrateCategoryData({ force = false } = {}) {
+  try {
+    setSyncMessage('Loading categories from Sheets...');
+    const { categories, summary, source } = await loadCategoryBundle({ force });
+    renderCategoryOptions(categories);
+    renderCategoryHealthList(categories);
+    setCategoryState(summary, source);
+    setSyncMessage('Connected to Google Sheets');
+  } catch (error) {
+    console.error('Failed to load category data', error);
+    setSyncMessage('Auth is ready, but sheet data is not available yet');
+  }
+}
+
 function wireNavigation() {
   qsa('[data-route], [data-go-route]').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', (event) => {
       const targetRoute = button.dataset.route || button.dataset.goRoute;
-      setRoute(targetRoute);
+      if (targetRoute === 'logout') {
+        event.preventDefault();
+        clearSessionCaches();
+        sessionStorage.removeItem('bp_access_token');
+        signOut();
+        updateAuthControls();
+        setSyncMessage(DEFAULT_SYNC_MESSAGE);
+        setRoute('login');
+        return;
+      }
+
+      if (targetRoute) {
+        setRoute(targetRoute);
+      }
     });
   });
 
@@ -80,6 +205,9 @@ function hydrateShell() {
   if (today) {
     today.textContent = formatDateLabel(new Date('2026-06-21T00:00:00+05:30'));
   }
+
+  setSyncMessage(DEFAULT_SYNC_MESSAGE);
+  renderDashboardPreview();
 }
 
 function initializeChartPreview() {
@@ -132,12 +260,43 @@ function initializeIcons() {
   }
 }
 
+function handleAuthSuccess() {
+  updateAuthControls();
+  setRoute('dashboard');
+  hydrateCategoryData({ force: true });
+}
+
+function handleAuthFailure() {
+  updateAuthControls();
+  setSyncMessage('Sign-in failed. Check Google OAuth configuration.');
+}
+
+function initializeIntegrations() {
+  initAuth(handleAuthSuccess, handleAuthFailure);
+
+  onTokenExpired(() => {
+    clearSessionCaches();
+    updateAuthControls();
+    setSyncMessage('Session expired. Sign in again.');
+    setRoute('login');
+  });
+
+  if (isUserAuthenticated()) {
+    updateAuthControls();
+    setRoute('dashboard');
+    hydrateCategoryData();
+  } else {
+    updateAuthControls();
+  }
+}
+
 function initializeApp() {
   wireNavigation();
   hydrateShell();
   initializeChartPreview();
   initializeIcons();
   updateRoute(getRouteFromHash());
+  initializeIntegrations();
 }
 
 initializeApp();

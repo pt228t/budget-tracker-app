@@ -68,7 +68,7 @@
                 session wiring before data hydration.
               </p>
               <div class="shell-actions">
-                <button class="btn btn-primary" type="button" data-go-route="dashboard">
+                <button class="btn btn-primary" type="button" data-auth-action="signin">
                   Sign in with Google
                 </button>
                 <button class="btn btn-outline" type="button" data-go-route="settings">
@@ -102,9 +102,9 @@
               <p class="text-secondary">Will update from Transactions rows.</p>
             </article>
             <article class="card shell-card" data-testid="overview-card">
-              <p class="shell-label">Sync Status</p>
-              <h3 class="shell-value">Disconnected</h3>
-              <p class="text-secondary">Sheets wrapper lands in B-006.</p>
+              <p class="shell-label">Category State</p>
+              <h3 class="shell-value" data-remaining-amount>INR 0</h3>
+              <p class="text-secondary" data-category-source>Waiting for auth and sheet access.</p>
             </article>
           </div>
 
@@ -123,13 +123,10 @@
             <article class="card section-panel">
               <div class="panel-header">
                 <h2>Category Progress</h2>
-                <span class="status-pill status-pill-muted">Chart.js ready</span>
+                <span class="status-pill status-pill-muted" data-category-count>0 categories</span>
               </div>
-              <div class="placeholder-stack">
-                <div class="placeholder-line placeholder-line-lg"></div>
-                <div class="placeholder-line"></div>
-                <div class="placeholder-line"></div>
-              </div>
+              <p class="text-secondary" data-category-status>Preview health states until live sheet data loads.</p>
+              <ul class="grid gap-3 mt-4" data-testid="category-health-list"></ul>
             </article>
           </div>
         </section>
@@ -151,7 +148,9 @@
               </div>
               <div class="form-group">
                 <label class="form-label" for="category">Category</label>
-                <input class="form-control" id="category" type="text" placeholder="Groceries" />
+                <select class="form-control" id="category" data-testid="category-select">
+                  <option value="">Select a category</option>
+                </select>
               </div>
               <div class="form-group">
                 <label class="form-label" for="payment-source">Payment Source</label>
