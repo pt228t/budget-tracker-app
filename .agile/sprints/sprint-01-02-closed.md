@@ -24,6 +24,6 @@ Sheets backend ready, sync work started, and frontend shell established for auth
 
 ## Still Open
 
-- [ ] Run hosted validation on a real GitHub Pages deployment
-- [ ] Start `B-005` OAuth integration
-- [ ] Start `B-006` Sheets API wrapper
+- [x] Run hosted validation on a real GitHub Pages deployment (Done 2026-06-21)
+- [x] Start `B-005` OAuth integration (Done in Sprint 2)
+- [x] Start `B-006` Sheets API wrapper (Done in Sprint 2)
