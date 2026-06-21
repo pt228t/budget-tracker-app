@@ -23,7 +23,7 @@
 
 | ID | Story | Epic | Milestone | Sprint | Status |
 |----|-------|------|-----------|--------|--------|
-| B-001 | Create BudgetPulse Google Sheet with all tabs + schema | Setup | M1 | S1 | `TODO` |
+| B-001 | Create BudgetPulse Google Sheet with all tabs + schema | Setup | M1 | S1 | `DONE` |
 | B-002 | Apps Script: Budget sync from joint-spend Recurring_Items | Sync | M1 | S1 | `DONE` |
 | B-003 | Apps Script: Daily sync trigger setup | Sync | M1 | S1 | `DONE` |
 | B-004 | Frontend: Project scaffold (HTML/CSS/JS structure) | Setup | M1 | S1 | `DONE` |
@@ -91,7 +91,7 @@
 | B-004b | Setup Apps Script Node.js local test mocks | 2 |
 
 **Definition of Done:**
-- [ ] BudgetPulse Google Sheet exists with all tabs and headers
+- [x] BudgetPulse Google Sheet exists with all tabs and headers (AGY setup.js auto-bootstraps on first load)
 - [ ] Sync trigger reads Recurring_Items and populates Budget_Categories
 - [x] Frontend scaffold build + deploy workflow prepared for GitHub Pages (login shell)
 - [x] Design tokens (CSS variables) defined

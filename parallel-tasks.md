@@ -222,7 +222,7 @@ graph TD
 
 | Agent | Owned Files |
 |-------|-------------|
-| 🚀 AGY | `src/css/*`, `src/js/auth.js`, `src/js/dashboard.js` |
+| 🚀 AGY | `src/css/*`, `src/js/auth.js`, `src/js/setup.js`, `src/js/dashboard.js` |
 | 🧠 Claude | `scripts/apps-script/*`, `src/js/sheets-api.js`, `src/js/cache.js`, `src/js/expense-logger.js` |
 | ⚡ Codex | `index.html`, `app.js`, `utils.js`, `src/js/categories.js`, `src/js/analytics.js`, `package.json`, `tests/*`, `*.config.js` |
 
