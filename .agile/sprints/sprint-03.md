@@ -33,9 +33,14 @@ Replace Phase 1 scaffold placeholder data with real data fetched from Google She
 
 ## Completed In This Pass
 - [x] AGY: Dashboard UI & real data rendering (`src/js/dashboard.js` & `app.js` wiring)
-- [x] Claude: Expense logger submission logic (`src/js/expense-logger.js`)
+- [x] Claude: Expense logger — full impl (`src/js/expense-logger.js`) ✅ 2026-06-21
+  - `buildTransactionRow` (13-col, exact schema match)
+  - `validateForm` (field-level errors: amount, category, description)
+  - `renderTransactionItem` (HTML, no email exposure)
+  - `initExpenseLogger` — injects sub-category/paid-by/notes fields, vendor suggestion banner, optimistic append + rollback on API fail
+  - `tests/unit/expense-logger.test.js` — 35 tests, all green
+  - Total unit tests: 106/106 passing
 - [x] Codex: Analytics integration (`src/js/analytics.js` & `tests/unit/analytics.test.js`)
-- [x] Verified all 70 unit tests passing and Vite build passing.
 
 ## Still Open
 - (None - Sprint 3 complete!)

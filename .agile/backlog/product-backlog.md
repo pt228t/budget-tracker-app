@@ -29,9 +29,9 @@
 | B-004 | Frontend: Project scaffold (HTML/CSS/JS structure) | Setup | M1 | S1 | `DONE` |
 | B-005 | Frontend: Google OAuth sign-in flow | Auth | M1 | S2 | `DONE` |
 | B-006 | Frontend: Sheets API wrapper (read/write) | Infra | M1 | S2 | `DONE` |
-| B-007 | Frontend: Expense logging form (quick-add) | Logging | M2 | S3 | `TODO` |
+| B-007 | Frontend: Expense logging form (quick-add) | Logging | M2 | S3 | `DONE` |
 | B-008 | Frontend: Category dropdown (from Budget_Categories) | Logging | M2 | S3 | `DONE` |
-| B-009 | Frontend: Recent transactions list (current month) | Logging | M2 | S3 | `TODO` |
+| B-009 | Frontend: Recent transactions list (current month) | Logging | M2 | S3 | `DONE` |
 | B-010 | Frontend: Dashboard summary cards | Dashboard | M2 | S4 | `TODO` |
 | B-011 | Frontend: Per-category budget health bars | Dashboard | M2 | S4 | `TODO` |
 | B-012 | Frontend: Pool health indicator (net position) | Dashboard | M2 | S4 | `TODO` |
@@ -139,16 +139,17 @@
 |----|------|-----------|
 | B-010 | Summary cards | 3 |
 | B-011 | Category health bars | 3 |
-| B-012 | Empty/loading states | 1 |
-| B-013 | Donut chart | 2 |
-| B-014 | Bar chart | 2 |
-| B-015 | Top 5 table | 1 |
+| B-012 | Frontend: Empty/loading states | Dashboard | M2 | S4 | `TODO` |
+| B-013 | Frontend: Donut chart | Analytics | M3 | S4 | `DONE` |
+| B-014 | Frontend: Bar chart | Analytics | M3 | S4 | `DONE` |
+| B-015 | Frontend: Top 5 table | Analytics | M3 | S4 | `DONE` |
 
-**Definition of Done:**
-- [x] Summary cards calculate correct totals (AGY `dashboard.js`)
-- [x] Category health bars render with accurate color coding (Codex `categories.js`)
-- [x] Charts render correctly if data exists (Codex `analytics.js`)
-- [ ] Pool health shows net surplus/shortfall
+**Definition of Done (Sprint 4):**
+- [x] Summary cards calculate correct totals
+- [x] Category health bars render with accurate color coding
+- [x] Charts render correctly if data exists
+- [x] Pool health shows net surplus/shortfall
+- [ ] Dashboard empty states implemented (hide preview data if sheet is 0 rows)
 - [ ] Beautiful, polished design
 
 ---
@@ -161,6 +162,23 @@
 | S2 | - | - | - | - |
 | S3 | - | - | - | - |
 | S4 | - | - | - | - |
+| S5 | - | - | - | Next Up |
+
+### Sprint 5: Refinement & Advanced Tracking (Week 5)
+**Goal:** Finalize CRUD (Edit/Delete) and polish empty states.
+
+| ID | Task | Est (hrs) |
+|----|------|-----------|
+| B-012 | Dashboard empty/loading states | 2 |
+| B-018 | Edit/delete transactions | 4 |
+| B-016 | Sub-category tagging | 2 |
+| B-017 | Vendor suggestion engine | 2 |
+
+**Definition of Done:**
+- [ ] Users can delete a transaction they logged by mistake.
+- [ ] Users can edit existing transactions.
+- [ ] Empty state replaces preview UI when data is empty.
+- [ ] Sub-categories and vendor suggestions implemented.
 
 ---
 
