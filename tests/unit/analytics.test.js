@@ -1,5 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { calculateExpensesByCategory, calculateBudgetVsActual, getTopExpenses } from '../../src/js/analytics.js';
+import { describe, it, expect, beforeEach } from 'vitest';
+import {
+  calculateExpensesByCategory,
+  calculateBudgetVsActual,
+  getTopExpenses,
+  filterByMonth,
+  renderTopExpensesTable,
+} from '../../src/js/analytics.js';
 
 describe('Analytics Data Transformation', () => {
     it('calculates expenses by category correctly', () => {
@@ -65,4 +71,57 @@ describe('Analytics Data Transformation', () => {
         expect(result[4].amount).toBe(10);
         expect(result[4].description).toBe('Desc 1');
     });
+});
+
+// ─── filterByMonth ────────────────────────────────────────────────────────────
+
+describe('filterByMonth', () => {
+  const ROWS = [
+    ['tx1', '2026-06-01', '2026-06', '100', 'Cat1', '', 'Swiggy'],
+    ['tx2', '2026-05-15', '2026-05', '200', 'Cat2', '', 'Zomato'],
+    ['tx3', '2026-06-20', '2026-06', '50',  'Cat1', '', 'BigBazaar'],
+  ];
+
+  it('returns only rows matching the month', () => {
+    const result = filterByMonth(ROWS, '2026-06');
+    expect(result).toHaveLength(2);
+    expect(result[0][0]).toBe('tx1');
+    expect(result[1][0]).toBe('tx3');
+  });
+
+  it('returns [] when no rows match', () => {
+    expect(filterByMonth(ROWS, '2025-01')).toEqual([]);
+  });
+
+  it('returns [] for empty input', () => {
+    expect(filterByMonth([], '2026-06')).toEqual([]);
+  });
+});
+
+// ─── renderTopExpensesTable empty state ───────────────────────────────────────
+
+describe('renderTopExpensesTable', () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <table id="testTable">
+        <thead><tr><th>Date</th><th>Desc</th><th>Amount</th><th>Cat</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    `;
+  });
+
+  it('renders empty-state row when topExpenses is empty', () => {
+    renderTopExpensesTable('testTable', []);
+    const tbody = document.querySelector('#testTable tbody');
+    expect(tbody.innerHTML).toContain('No expenses');
+  });
+
+  it('renders expense rows when data present', () => {
+    renderTopExpensesTable('testTable', [
+      { date: '2026-06-01', description: 'Big Bazaar', amount: 850, categoryId: 'Cat1' },
+    ]);
+    const tbody = document.querySelector('#testTable tbody');
+    expect(tbody.innerHTML).toContain('Big Bazaar');
+    expect(tbody.innerHTML).toContain('850');
+  });
 });

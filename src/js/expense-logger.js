@@ -66,51 +66,37 @@ export async function initExpenseLogger(formId, listId) {
 
 // ─── Form Enhancement ─────────────────────────────────────────────────────────
 
-/**
- * Injects sub-category, paid-by, and notes fields before the submit button.
- * Uses data-injected guard to avoid double-injection on re-init.
- */
 function _injectMissingFields(form) {
-  if (form.dataset.injected) return;
-  form.dataset.injected = '1';
+  // Fields and banner are static in index.html — skip if already present.
+  if (form.querySelector('#bp-sub-category')) return;
 
+  // Fallback injection for environments without the static HTML.
   const submitBtn = form.querySelector('[type="submit"]');
-
   const extra = document.createElement('div');
-  extra.className = 'space-y-4';
   extra.innerHTML = `
-    <div id="bp-suggestion-banner" class="suggestion-banner" style="display:none;" role="status" aria-live="polite">
+    <div id="bp-suggestion-banner" style="display:none;" role="status" aria-live="polite">
       <span id="bp-suggestion-text"></span>
-      <button type="button" id="bp-suggestion-accept" class="btn btn-xs btn-outline-primary">Use this</button>
-      <button type="button" id="bp-suggestion-dismiss" class="btn btn-xs">Dismiss</button>
+      <button type="button" id="bp-suggestion-accept">Use this</button>
+      <button type="button" id="bp-suggestion-dismiss">Dismiss</button>
     </div>
-
     <div>
-      <label for="bp-sub-category" class="form-label">Sub-category <span class="text-muted">(optional)</span></label>
-      <input id="bp-sub-category" name="subCategory" type="text"
-        class="form-input" placeholder="e.g. Vegetables, Fuel…" maxlength="60" autocomplete="off">
+      <label for="bp-sub-category">Sub-category</label>
+      <input id="bp-sub-category" name="subCategory" type="text" placeholder="e.g. Vegetables, Fuel…" maxlength="60" autocomplete="off">
     </div>
-
     <div>
-      <label for="bp-paid-by" class="form-label">Paid by</label>
-      <select id="bp-paid-by" name="paidBy" class="form-select">
+      <label for="bp-paid-by">Paid by</label>
+      <select id="bp-paid-by" name="paidBy">
         <option value="me">Me</option>
         <option value="partner">Partner</option>
       </select>
     </div>
-
     <div>
-      <label for="bp-notes" class="form-label">Notes <span class="text-muted">(optional)</span></label>
-      <input id="bp-notes" name="notes" type="text"
-        class="form-input" placeholder="Any extra context…" maxlength="200">
+      <label for="bp-notes">Notes</label>
+      <input id="bp-notes" name="notes" type="text" placeholder="Any extra context…" maxlength="200">
     </div>
   `;
-
-  if (submitBtn) {
-    form.insertBefore(extra, submitBtn);
-  } else {
-    form.appendChild(extra);
-  }
+  if (submitBtn) form.insertBefore(extra, submitBtn);
+  else form.appendChild(extra);
 }
 
 // ─── Vendor Suggestion ────────────────────────────────────────────────────────

@@ -1,22 +1,33 @@
 import { readRange } from './sheets-api.js';
 
-// Alias as requested by prompt
-const fetchSheetData = readRange;
-
 export async function initAnalytics(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    container.innerHTML = '<p>Loading analytics...</p>';
+    container.innerHTML = '<p class="text-muted" style="padding:12px;">Loading analytics…</p>';
 
     try {
         const [transactionsData, categoriesData] = await Promise.all([
-            fetchSheetData('Transactions'),
-            fetchSheetData('Budget_Categories')
+            readRange('Transactions!A:M'),
+            readRange('Budget_Categories!A:H'),
         ]);
 
-        const txRows = transactionsData.slice(1); // skip headers
-        const catRows = categoriesData.slice(1); // skip headers
+        const allTxRows = transactionsData.slice(1);
+        const catRows   = categoriesData.slice(1);
+
+        const today = new Date();
+        const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        const txRows = filterByMonth(allTxRows, month);
+
+        if (txRows.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state" style="text-align:center;padding:48px 16px;">
+                    <p class="text-secondary" style="margin-bottom:8px;">No transactions this month.</p>
+                    <p class="text-muted" style="font-size:0.875rem;">Log an expense to see analytics here.</p>
+                </div>
+            `;
+            return;
+        }
 
         const expensesByCategory = calculateExpensesByCategory(txRows);
         const budgetVsActual = calculateBudgetVsActual(txRows, catRows);
@@ -51,8 +62,12 @@ export async function initAnalytics(containerId) {
         renderBudgetBarChart('budgetBarChart', budgetVsActual);
         renderTopExpensesTable('topExpensesTable', topExpenses);
     } catch (err) {
-        container.innerHTML = `<p style="color: red;">Error loading analytics: ${err.message}</p>`;
+        container.innerHTML = `<p class="text-danger" style="padding:12px;">Error loading analytics: ${err.message}</p>`;
     }
+}
+
+export function filterByMonth(txRows, month) {
+    return txRows.filter(row => String(row[2]).trim() === month);
 }
 
 export function calculateExpensesByCategory(txRows) {
@@ -178,7 +193,12 @@ export function renderBudgetBarChart(canvasId, budgetVsActual) {
 export function renderTopExpensesTable(tableId, topExpenses) {
     const tbody = document.querySelector(`#${tableId} tbody`);
     if (!tbody) return;
-    
+
+    if (topExpenses.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--color-gray-400,#9ca3af);">No expenses recorded this month.</td></tr>`;
+        return;
+    }
+
     tbody.innerHTML = topExpenses.map(exp => `
         <tr>
             <td style="text-align: left;">${exp.date || ''}</td>
