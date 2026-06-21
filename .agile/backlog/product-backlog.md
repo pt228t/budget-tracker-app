@@ -27,7 +27,7 @@
 | B-002 | Apps Script: Budget sync from joint-spend Recurring_Items | Sync | M1 | S1 | `DONE` |
 | B-003 | Apps Script: Daily sync trigger setup | Sync | M1 | S1 | `DONE` |
 | B-004 | Frontend: Project scaffold (HTML/CSS/JS structure) | Setup | M1 | S1 | `DONE` |
-| B-005 | Frontend: Google OAuth sign-in flow | Auth | M1 | S2 | `TODO` |
+| B-005 | Frontend: Google OAuth sign-in flow | Auth | M1 | S2 | `IN PROGRESS` (AGY Done) |
 | B-006 | Frontend: Sheets API wrapper (read/write) | Infra | M1 | S2 | `TODO` |
 | B-007 | Frontend: Expense logging form (quick-add) | Logging | M2 | S3 | `TODO` |
 | B-008 | Frontend: Category dropdown (from Budget_Categories) | Logging | M2 | S3 | `TODO` |

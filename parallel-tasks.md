@@ -219,7 +219,7 @@ PHASE 1 — kick off all 3 simultaneously
   WAIT → all 3 done → commit + merge
 
 PHASE 2 — kick off all 3 simultaneously
-  ├── 🚀 AGY:   "Build Google OAuth module in src/js/auth.js."
+  ├── ✅ 🚀 AGY:   "Build Google OAuth module in src/js/auth.js." (DONE)
   ├── 🧠 Claude: "Build Sheets API wrapper + cache layer."
   └── ⚡ Codex:  "Build categories module in src/js/categories.js."
   
