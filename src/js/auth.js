@@ -3,7 +3,7 @@
  * Google Identity Services OAuth 2.0 integration
  */
 
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // Will be injected via GitHub Actions / config
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
 let tokenClient;
