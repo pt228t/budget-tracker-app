@@ -159,6 +159,26 @@
                   <option>Personal Payment</option>
                 </select>
               </div>
+              <div class="form-group">
+                <label class="form-label" for="bp-sub-category">Sub-category <span class="text-muted" style="font-weight:normal;font-size:0.8em;">(optional)</span></label>
+                <input class="form-control" id="bp-sub-category" name="subCategory" type="text" placeholder="e.g. Vegetables, Fuel…" maxlength="60" autocomplete="off" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="bp-paid-by">Paid by</label>
+                <select class="form-control" id="bp-paid-by" name="paidBy">
+                  <option value="me">Me</option>
+                  <option value="partner">Partner</option>
+                </select>
+              </div>
+              <div class="form-group col-span-2">
+                <label class="form-label" for="bp-notes">Notes <span class="text-muted" style="font-weight:normal;font-size:0.8em;">(optional)</span></label>
+                <input class="form-control" id="bp-notes" name="notes" type="text" placeholder="Any extra context…" maxlength="200" />
+              </div>
+              <div id="bp-suggestion-banner" class="col-span-2" style="display:none;background:var(--color-primary-50,#eff6ff);border:1px solid var(--color-primary-200,#bfdbfe);border-radius:6px;padding:8px 12px;font-size:0.875rem;" role="status" aria-live="polite">
+                <span id="bp-suggestion-text"></span>
+                <button type="button" id="bp-suggestion-accept" class="btn btn-xs" style="margin-left:8px;">Use this</button>
+                <button type="button" id="bp-suggestion-dismiss" class="btn btn-xs" style="margin-left:4px;">Dismiss</button>
+              </div>
               <div class="form-actions mt-4 col-span-2">
                 <button type="submit" class="btn btn-primary w-full">Log Expense</button>
               </div>

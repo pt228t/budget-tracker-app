@@ -149,6 +149,9 @@ function renderDashboardPreview() {
 }
 
 async function hydrateCategoryData({ force = false } = {}) {
+  // Wire expense form immediately — independent of Sheets data availability.
+  initExpenseLogger('expense-log-form', 'recent-transactions-list');
+
   try {
     setSyncMessage('Loading categories from Sheets...');
     const { categories, summary, source } = await loadCategoryBundle({ force });
@@ -156,7 +159,6 @@ async function hydrateCategoryData({ force = false } = {}) {
     renderCategoryHealthList(categories);
     setCategoryState(summary, source);
     renderDashboardHealth(summary, 'budget-health-panel');
-    initExpenseLogger('expense-log-form', 'recent-transactions-list');
     initAnalytics('analytics-container');
     setSyncMessage('Connected to Google Sheets');
   } catch (error) {
