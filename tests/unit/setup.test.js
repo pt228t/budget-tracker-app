@@ -98,6 +98,27 @@ describe('Setup / Bootstrap Module', () => {
     expect(report.created).toContain('Notification_Log');
   });
 
+  it('should inject userEmail into allowed_users when creating App_Config', async () => {
+    // Mock: no tabs exist
+    global.fetch
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ sheets: [] }) }) // metadata
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ replies: [] }) }) // createTabs
+      .mockResolvedValue({ ok: true, json: async () => ({}) }); // writeHeaders
+
+    // We must mock the actual appendRow import since it's used for writing defaults
+    const { appendRow } = await import('../../src/js/sheets-api.js');
+    appendRow.mockClear();
+
+    await bootstrapSpreadsheet('creator@example.com');
+
+    // Find the call to appendRow that wrote 'allowed_users'
+    const calls = appendRow.mock.calls;
+    const allowedUsersCall = calls.find(call => call[1][0] === 'allowed_users');
+    
+    expect(allowedUsersCall).toBeDefined();
+    expect(allowedUsersCall[1][1]).toBe('creator@example.com');
+  });
+
   it('should return not ready when metadata fetch fails', async () => {
     global.fetch.mockResolvedValueOnce({
       ok: false,

@@ -85,8 +85,9 @@ const REQUIRED_TABS = Object.keys(SCHEMA);
 /**
  * Run the full bootstrap check.
  * Returns { ready: boolean, created: string[], existing: string[], errors: string[] }
+ * @param {string} userEmail - The email of the user bootstrapping the app (used for allowed_users)
  */
-export async function bootstrapSpreadsheet() {
+export async function bootstrapSpreadsheet(userEmail = '') {
   const report = { ready: false, created: [], existing: [], errors: [] };
 
   try {
@@ -124,7 +125,14 @@ export async function bootstrapSpreadsheet() {
         await writeHeaders(tabName, SCHEMA[tabName].headers);
 
         if (SCHEMA[tabName].defaults.length > 0) {
-          await writeDefaults(tabName, SCHEMA[tabName].defaults);
+          // If initializing App_Config, inject the creator's email into allowed_users
+          const defaults = SCHEMA[tabName].defaults.map(row => {
+            if (tabName === 'App_Config' && row[0] === 'allowed_users') {
+              return [row[0], userEmail];
+            }
+            return row;
+          });
+          await writeDefaults(tabName, defaults);
         }
 
         report.created.push(tabName);

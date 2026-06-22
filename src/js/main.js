@@ -1,6 +1,7 @@
 import { renderAppShell } from './app-shell.js';
 import { initAuth, signOut } from './auth.js';
 import { isUserAllowed } from './sheets-api.js';
+import { bootstrapSpreadsheet } from './setup.js';
 
 const appRoot = document.querySelector('#app');
 
@@ -27,6 +28,12 @@ initAuth(
       }
       
       const profile = await response.json();
+      
+      // Bootstrap the spreadsheet backend (auto-creates if missing, injects creator as allowed)
+      const setupReport = await bootstrapSpreadsheet(profile.email);
+      if (!setupReport.ready) {
+        throw new Error('Failed to bootstrap the backend spreadsheet: ' + setupReport.errors.join(', '));
+      }
       
       // Verify authorization
       const allowed = await isUserAllowed(profile.email);
