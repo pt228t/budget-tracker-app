@@ -39,6 +39,7 @@ const CLASP_JSON = resolve(GS_DIR, '.clasp.json');
 // Add to this list when a new .gs file is created — the deploy will
 // refuse to run if any file in this list is missing.
 const REQUIRED_GS_FILES = [
+  'appsscript.json',
   'Config.gs',
   'Helpers.gs',
   'Sync.gs',
