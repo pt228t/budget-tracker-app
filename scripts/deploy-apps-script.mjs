@@ -42,6 +42,7 @@ const REQUIRED_GS_FILES = [
   'appsscript.json',
   'Config.gs',
   'Helpers.gs',
+  'Triggers.gs',
   'Sync.gs',
   'Alerts.gs',
   'Notifications.gs',

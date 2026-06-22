@@ -205,3 +205,4 @@
 |----|-------|--------|--------|------------|
 | BUG-001 | Sync.gs mapping `monthly_amount` to incorrect column index | AppScript Sync | `DONE` | Fixed column mapping and added unit tests in `sync.test.js`. |
 | BUG-002 | `clasp push` CI failure with GCP Service Account | CI/CD | `DONE` | Pivoted to Refresh Token auth approach; updated GitHub Actions. |
+| BUG-003 | Daily sync trigger (B-003) missing programmatic setup | Automation | `DONE` | Added `Triggers.gs` to create custom sheet menu for one-click installation. |
