@@ -188,18 +188,11 @@ function authenticateClasp() {
       refresh_token: 'service-account',
       token_type:    'Bearer',
       expiry_date:   Date.now() + 3600000,
-      client_id:     '1072944098190-vm2v2i5dcn4favobkcmwrs35ngsj4i9h.apps.googleusercontent.com',
-      client_secret: '-',
     },
     oauth2ClientSettings: {
-      scopes: [
-        'https://www.googleapis.com/auth/script.projects',
-        'https://www.googleapis.com/auth/drive',
-        'https://www.googleapis.com/auth/userinfo.email',
-        'https://www.googleapis.com/auth/userinfo.profile',
-        'openid',
-      ],
-      redirectUri: 'http://localhost',
+      clientId:     '1072944098190-vm2v2i5dcn4favobkcmwrs35ngsj4i9h.apps.googleusercontent.com',
+      clientSecret: '-',
+      redirectUri:  'http://localhost',
     },
     isLocalCreds: false,
   };

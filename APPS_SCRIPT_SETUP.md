@@ -282,6 +282,8 @@ no manual token rotation is needed.
 - ✅ Linked the Apps Script project to the same GCP project (via Project Settings → GCP Project number)
 - ✅ Shared the Apps Script project (via Google Drive) with the service account email as Editor
 - ✅ Shared the BudgetPulse Google Sheet with the service account email as Editor
+- ✅ Assigned the **Service Account Token Creator** role to the service account (in GCP IAM) so it can generate its own access tokens.
+
 
 ### Step A — Enable Apps Script API in GCP
 
