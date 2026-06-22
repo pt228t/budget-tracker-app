@@ -160,39 +160,39 @@ function writeClasp(scriptId) {
 
 // ─── Step 5: Authenticate clasp with token from env ──────────────────────────
 /**
- * Reads CLASP_ACCESS_TOKEN from the environment (set by google-github-actions/auth
- * in CI) and writes a complete ~/.clasprc.json that clasp accepts.
- * In local dev, falls back to the existing clasp login session.
+ * Reads clasp credentials from the environment and writes a complete 
+ * ~/.clasprc.json. Clasp will automatically use the refresh token to 
+ * get a fresh access token when it runs.
  */
 function authenticateClasp() {
-  const token = process.env.CLASP_ACCESS_TOKEN;
+  const refreshToken = process.env.CLASP_REFRESH_TOKEN;
+  const clientId     = process.env.CLASP_CLIENT_ID;
+  const clientSecret = process.env.CLASP_CLIENT_SECRET;
 
-  if (!token) {
+  if (!refreshToken || !clientId || !clientSecret) {
     if (IS_CI) {
       fail(
-        'CLASP_ACCESS_TOKEN env var is not set.\n' +
-        '  → The google-github-actions/auth step should set this automatically.\n' +
-        '  → Check that the auth step ran and check its outputs in the Actions log.'
+        'Missing clasp credentials in environment.\n' +
+        '  → Make sure CLASP_REFRESH_TOKEN, CLASP_CLIENT_ID, and CLASP_CLIENT_SECRET\n' +
+        '  → are all set as GitHub repository secrets.'
       );
     }
     // Local dev: assume user is already logged in via `npm run clasp:login`
-    log('CLASP_ACCESS_TOKEN not set — using local clasp login session.');
+    log('Clasp credentials not found in env — using local clasp login session.');
     return;
   }
 
-  // Write a complete .clasprc.json. Clasp validates that all fields exist
-  // even when using a pre-generated access_token. client_id is the public
-  // clasp OAuth app ID (not a secret); client_secret is unused for this flow.
+  // Write a complete .clasprc.json.
   const clasprc = {
     token: {
-      access_token:  token,
-      refresh_token: 'service-account',
+      access_token:  'dummy-access-token-to-force-refresh',
+      refresh_token: refreshToken,
       token_type:    'Bearer',
-      expiry_date:   Date.now() + 3600000,
+      expiry_date:   0, // Force clasp to refresh immediately
     },
     oauth2ClientSettings: {
-      clientId:     '1072944098190-vm2v2i5dcn4favobkcmwrs35ngsj4i9h.apps.googleusercontent.com',
-      clientSecret: '-',
+      clientId:     clientId,
+      clientSecret: clientSecret,
       redirectUri:  'http://localhost',
     },
     isLocalCreds: false,
@@ -200,7 +200,7 @@ function authenticateClasp() {
 
   const clasprcPath = resolve(process.env.HOME || '/root', '.clasprc.json');
   writeFileSync(clasprcPath, JSON.stringify(clasprc));
-  log('CLASP_ACCESS_TOKEN injected into ~/.clasprc.json');
+  log('Clasp credentials injected into ~/.clasprc.json');
 }
 
 // ─── Step 6: Push via clasp ───────────────────────────────────────────────────

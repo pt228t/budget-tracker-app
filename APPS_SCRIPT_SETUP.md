@@ -272,61 +272,59 @@ missing from disk, preventing accidental partial deploys.
 
 ---
 
-## Permanent CI: Service Account Token
+## Permanent CI: The Refresh Token Approach
 
-This is the recommended approach — the service account key never expires and
-no manual token rotation is needed.
+In order to push to Apps Script, Google requires the calling account to explicitly enable the Apps Script API at `https://script.google.com/home/usersettings`. 
 
-### What you need to have done (prerequisites)
-- ✅ Created the service account in GCP Console
-- ✅ Linked the Apps Script project to the same GCP project (via Project Settings → GCP Project number)
-- ✅ Shared the Apps Script project (via Google Drive) with the service account email as Editor
-- ✅ Shared the BudgetPulse Google Sheet with the service account email as Editor
-- ✅ Assigned the **Service Account Token Creator** role to the service account (in GCP IAM) so it can generate its own access tokens.
+**Because a Service Account is a robot and cannot log into this UI to click the toggle, you cannot use a Service Account with `clasp` for personal projects.**
 
+The correct, permanent solution is to use your own **Refresh Token**. A refresh token never expires (unless you revoke it or change your password) and allows `clasp` to generate fresh access tokens on the fly during CI deployments.
 
-### Step A — Enable Apps Script API in GCP
+### Step A — Enable Apps Script API
 
-1. Go to [GCP Console → APIs & Services → Library](https://console.cloud.google.com/apis/library)
-2. Search for **Apps Script API**
-3. Click it → **Enable**
+1. Go to [https://script.google.com/home/usersettings](https://script.google.com/home/usersettings)
+2. Ensure the **Google Apps Script API** is toggled to **ON**.
 
-> Without this, the service account cannot push to any Apps Script project regardless of sharing.
+### Step B — Get Your clasp Credentials
 
-### Step B — Download the Service Account JSON Key
+If you already ran `npm run clasp:login` locally in Step 2, you already have these credentials!
 
-1. Go to [GCP Console → Service Accounts](https://console.cloud.google.com/iam-admin/serviceaccounts)
-2. Click your service account → **Keys** tab
-3. **Add Key → Create new key → JSON** → Download
-4. Open the file and copy its **entire contents**
+Run this command in your terminal:
+```bash
+cat ~/.clasprc.json
+```
 
-The file looks like this:
+You will see a JSON structure like this:
 ```json
 {
-  "type": "service_account",
-  "project_id": "your-project",
-  "private_key_id": "abc123",
-  "private_key": "-----BEGIN RSA PRIVATE KEY-----\n...",
-  "client_email": "budgetpulse-ci@your-project.iam.gserviceaccount.com",
-  ...
+  "token": {
+    "access_token": "ya29...",
+    "refresh_token": "1//0g...",
+    ...
+  },
+  "oauth2ClientSettings": {
+    "clientId": "107294...",
+    "clientSecret": "...",
+    ...
+  }
 }
 ```
 
 ### Step C — Add GitHub Secrets
 
-Go to your repo → **Settings → Secrets and variables → Actions → New repository secret**
+Go to your GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**
 
-| Secret name | Value |
-|-------------|-------|
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | Paste the entire JSON key file contents |
-| `APPS_SCRIPT_ID` | Your Apps Script project ID from the URL |
+Add these 3 new secrets exactly as they appear in your `~/.clasprc.json`:
 
-### How the workflow uses it
+| Secret name | Value to copy from `~/.clasprc.json` |
+|-------------|--------------------------------------|
+| `CLASP_REFRESH_TOKEN` | The value of `token.refresh_token` |
+| `CLASP_CLIENT_ID` | The value of `oauth2ClientSettings.clientId` |
+| `CLASP_CLIENT_SECRET` | The value of `oauth2ClientSettings.clientSecret` |
 
-The `google-github-actions/auth@v2` action in the workflow automatically:
-1. Reads `GOOGLE_SERVICE_ACCOUNT_JSON`
-2. Signs a JWT with the private key
-3. Exchanges it for a **fresh access token** (valid for 1 hour)
-4. Passes it to `deploy-apps-script.mjs` as `CLASP_ACCESS_TOKEN`
+*(Note: If you still have the old `CLASP_ACCESS_TOKEN` secret from Step 3, you can safely delete it. The CI pipeline will now use the refresh token to get a fresh access token every time.)*
 
-Because a fresh token is minted on every run, expiry is never an issue.
+### How it works
+
+When you push code, the GitHub Action takes these 3 secrets and rebuilds a complete `.clasprc.json` file on the runner. When `clasp push` runs, it sees that the access token is missing/expired and automatically uses the `CLASP_REFRESH_TOKEN` to securely request a fresh one from Google.
+
