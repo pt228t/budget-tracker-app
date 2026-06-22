@@ -34,33 +34,25 @@ jobs:
       - name: Install dependencies (includes clasp)
         run: npm ci
 
-      # Guardrail: dry-run validates all files exist and no forbidden patterns
+      # Guardrail: dry-run validates all files exist and no forbidden patterns.
       - name: Validate .gs files (dry-run guardrail)
         env:
           APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
         run: node scripts/deploy-apps-script.mjs --dry-run
 
       # Authenticate with Google using the service account JSON key.
-      # The google-github-actions/auth action exchanges the key for a
-      # short-lived OAuth2 access token and exposes it as GOOGLE_ACCESS_TOKEN.
+      # Scopes must be comma-separated full googleapis.com URLs.
+      # OIDC scopes (openid, userinfo.email) are NOT valid here and
+      # cause a 400 INVALID_ARGUMENT from generateAccessToken.
       - name: Authenticate with Google (service account)
         if: ${{ github.event.inputs.dry_run != 'true' }}
         id: auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-          token_format: access_token
-          # Apps Script API scope required for clasp push.
-          # drive (not drive.file) is needed for container-bound scripts —
-          # drive.file only covers files the app itself created.
-          access_token_scopes: >-
-            https://www.googleapis.com/auth/script.projects
-            https://www.googleapis.com/auth/drive
-            https://www.googleapis.com/auth/userinfo.email
-            openid
+          token_format: 'access_token'
+          access_token_scopes: 'https://www.googleapis.com/auth/script.projects,https://www.googleapis.com/auth/drive'
 
-      # Pass the freshly minted access token to the deploy script.
-      # This token is always valid (just generated) — no expiry risk.
       - name: Deploy to Apps Script
         if: ${{ github.event.inputs.dry_run != 'true' }}
         env:

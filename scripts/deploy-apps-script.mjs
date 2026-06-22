@@ -24,7 +24,7 @@
  * First-time local setup: see APPS_SCRIPT_SETUP.md
  */
 
-import { execSync, spawnSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -158,33 +158,38 @@ function writeClasp(scriptId) {
 }
 
 // ─── Step 5: Authenticate clasp with token from env ──────────────────────────
+/**
+ * Reads CLASP_ACCESS_TOKEN from the environment (set by google-github-actions/auth
+ * in CI) and writes a complete ~/.clasprc.json that clasp accepts.
+ * In local dev, falls back to the existing clasp login session.
+ */
 function authenticateClasp() {
   const token = process.env.CLASP_ACCESS_TOKEN;
+
   if (!token) {
     if (IS_CI) {
       fail(
         'CLASP_ACCESS_TOKEN env var is not set.\n' +
-        '  → Add it as a GitHub Actions secret named CLASP_ACCESS_TOKEN\n' +
-        '  → See APPS_SCRIPT_SETUP.md for how to generate the token'
+        '  → The google-github-actions/auth step should set this automatically.\n' +
+        '  → Check that the auth step ran and check its outputs in the Actions log.'
       );
     }
-    // Local: assume user is already logged in via `clasp login`
-    log('CLASP_ACCESS_TOKEN not set — assuming local clasp session is active.');
+    // Local dev: assume user is already logged in via `npm run clasp:login`
+    log('CLASP_ACCESS_TOKEN not set — using local clasp login session.');
     return;
   }
 
-  // Write a complete .clasprc.json that clasp will accept.
-  // clasp validates the presence of client_id, client_secret, and expiry_date
-  // even when using a service account access token. The client_* values are
-  // the standard clasp OAuth app credentials (public, not secret).
+  // Write a complete .clasprc.json. Clasp validates that all fields exist
+  // even when using a pre-generated access_token. client_id is the public
+  // clasp OAuth app ID (not a secret); client_secret is unused for this flow.
   const clasprc = {
     token: {
       access_token:  token,
-      refresh_token: 'service-account',   // not used but field must exist
+      refresh_token: 'service-account',
       token_type:    'Bearer',
-      expiry_date:   Date.now() + 3600000, // 1 hour from now
+      expiry_date:   Date.now() + 3600000,
       client_id:     '1072944098190-vm2v2i5dcn4favobkcmwrs35ngsj4i9h.apps.googleusercontent.com',
-      client_secret: '-',                  // not needed for access_token auth
+      client_secret: '-',
     },
     oauth2ClientSettings: {
       scopes: [
