@@ -53,7 +53,7 @@ export function renderAppShell() {
             </p>
           </div>
           <div class="shell-actions" data-testid="login-shell">
-            <button class="btn btn-primary" type="button">Sign in with Google</button>
+            <button class="btn btn-primary" type="button" data-auth-action="signin">Sign in with Google</button>
             <button class="btn btn-outline" type="button">View Setup Notes</button>
           </div>
         </header>
