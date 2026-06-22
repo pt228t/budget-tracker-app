@@ -1,0 +1,11 @@
+{
+  "scriptId": "__APPS_SCRIPT_PROJECT_ID__",
+  "rootDir": ".",
+  "filePushOrder": [
+    "Config.gs",
+    "Helpers.gs",
+    "Sync.gs",
+    "Alerts.gs",
+    "Notifications.gs"
+  ]
+}

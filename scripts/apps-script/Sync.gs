@@ -124,8 +124,20 @@ function _runSync() {
 
 /**
  * Reads Recurring_Items tab from the joint-spend spreadsheet.
- * Expects: column A = item name, column B = monthly amount (INR).
- * Skips rows where name or amount is empty.
+ *
+ * Joint-spend Recurring_Items schema (9 columns):
+ *   Col A (1) = item           — item name
+ *   Col B (2) = category
+ *   Col C (3) = monthly_amount — the budget amount in INR  ← was incorrectly reading col B
+ *   Col D (4) = default_owner
+ *   Col E (5) = split_rule
+ *   Col F (6) = active_status  — must be 'Active' to be included
+ *   Col G (7) = start_month
+ *   Col H (8) = end_month
+ *   Col I (9) = notes
+ *
+ * Only rows with active_status === 'Active' are returned.
+ * Skips rows where name or amount is missing/zero.
  *
  * @param {string} spreadsheetId
  * @param {string} tabName
@@ -147,13 +159,17 @@ function _readRecurringItems(spreadsheetId, tabName) {
   var lastRow = sourceSheet.getLastRow();
   if (lastRow < 2) return [];
 
-  var data = sourceSheet.getRange(2, 1, lastRow - 1, 2).getValues();
+  // Read cols A–F (6 columns): item, category, monthly_amount, default_owner, split_rule, active_status
+  var data = sourceSheet.getRange(2, 1, lastRow - 1, 6).getValues();
   var items = [];
 
   for (var i = 0; i < data.length; i++) {
-    var name   = String(data[i][0]).trim();
-    var amount = Number(data[i][1]);
-    if (name && !isNaN(amount) && amount > 0) {
+    var name         = String(data[i][0]).trim();   // Col A: item
+    var amount       = Number(data[i][2]);           // Col C: monthly_amount (NOT col B which is category)
+    var activeStatus = String(data[i][5]).trim();    // Col F: active_status
+
+    // Only include Active rows with a valid name and positive amount
+    if (name && !isNaN(amount) && amount > 0 && activeStatus === 'Active') {
       items.push({ name: name, amount: amount });
     }
   }

@@ -8,3 +8,9 @@ test-results/
 .serena/
 .codebase-memory/
 .agile/
+
+# Apps Script deploy — these may contain script IDs or OAuth tokens
+# .clasp.json is safe to commit IF it only has a placeholder scriptId
+# but exclude any local override with a real ID
+scripts/apps-script/.clasp.json.local
+.clasprc.json
