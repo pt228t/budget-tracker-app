@@ -1,7 +1,6 @@
 # Product Backlog — BudgetPulse
 
-**Product Owner:** Prashant  
-**Last Updated:** 2026-06-21 (Phase 2 Claude complete; ⚠️ Codex integration gap: `main.js` needs `initAuth()` wiring)  
+**Last Updated:** 2026-06-22 (Sprints 1-5 complete, auth integrated)
 
 ---
 
@@ -139,7 +138,7 @@
 |----|------|-----------|
 | B-010 | Summary cards | 3 |
 | B-011 | Category health bars | 3 |
-| B-037 | Frontend: Empty/loading states | Dashboard | M2 | S4 | `TODO` |
+| B-037 | Frontend: Empty/loading states | Dashboard | M2 | S4 | `DONE` |
 | B-013 | Frontend: Donut chart | Analytics | M3 | S4 | `DONE` |
 | B-014 | Frontend: Bar chart | Analytics | M3 | S4 | `DONE` |
 | B-015 | Frontend: Top 5 table | Analytics | M3 | S4 | `DONE` |
@@ -149,8 +148,8 @@
 - [x] Category health bars render with accurate color coding
 - [x] Charts render correctly if data exists
 - [x] Pool health shows net surplus/shortfall
-- [ ] Dashboard empty states implemented (hide preview data if sheet is 0 rows)
-- [ ] Beautiful, polished design
+- [x] Dashboard empty states implemented (hide preview data if sheet is 0 rows)
+- [x] Beautiful, polished design
 
 ---
 
@@ -162,7 +161,7 @@
 | S2 | - | - | - | - |
 | S3 | - | - | - | - |
 | S4 | - | - | - | - |
-| S5 | - | - | - | Next Up |
+| S5 | - | - | - | Complete |
 
 ### Sprint 5: Refinement & Advanced Tracking (Week 5)
 **Goal:** Finalize CRUD (Edit/Delete) and polish empty states.
@@ -175,10 +174,10 @@
 | B-017 | Vendor suggestion engine | 2 |
 
 **Definition of Done:**
-- [ ] Users can delete a transaction they logged by mistake.
-- [ ] Users can edit existing transactions.
-- [ ] Empty state replaces preview UI when data is empty.
-- [ ] Sub-categories and vendor suggestions implemented.
+- [x] Users can delete a transaction they logged by mistake.
+- [x] Users can edit existing transactions.
+- [x] Empty state replaces preview UI when data is empty.
+- [x] Sub-categories and vendor suggestions implemented.
 
 ---
 
