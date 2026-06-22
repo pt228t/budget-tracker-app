@@ -64,6 +64,7 @@
 | B-030 | Frontend: Advanced filters (by person, category, date range) | Analytics | M5 | S9 | `TODO` |
 | B-031 | Frontend: Manual sync trigger button | Sync | M5 | S10 | `TODO` |
 | B-032 | Frontend: Settings page (config management) | Settings | M5 | S10 | `TODO` |
+| B-038 | Frontend: Admin console to manage authorized users (UI) | Auth | M5 | S10 | `TODO` |
 | B-033 | Frontend: Export data as CSV | Export | M5 | S10 | `TODO` |
 | B-034 | Frontend: Dark mode toggle | UX | M5 | S10 | `TODO` |
 | B-035 | Foreign currency support (INR primary) | Feature | Future | - | `TODO` |
