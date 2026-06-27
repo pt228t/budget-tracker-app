@@ -183,20 +183,18 @@ function authenticateClasp() {
     return;
   }
 
-  // Write a complete .clasprc.json.
+  // Write .clasprc.json in clasp 3.x format.
+  // Clasp 2.x used { token, oauth2ClientSettings }; clasp 3.x uses { tokens: { default: {...} } }.
   const clasprc = {
-    token: {
-      access_token:  'dummy-access-token-to-force-refresh',
-      refresh_token: refreshToken,
-      token_type:    'Bearer',
-      expiry_date:   0, // Force clasp to refresh immediately
+    tokens: {
+      default: {
+        client_id:     clientId,
+        client_secret: clientSecret,
+        type:          'authorized_user',
+        refresh_token: refreshToken,
+        access_token:  'dummy-access-token-to-force-refresh',
+      },
     },
-    oauth2ClientSettings: {
-      clientId:     clientId,
-      clientSecret: clientSecret,
-      redirectUri:  'http://localhost',
-    },
-    isLocalCreds: false,
   };
 
   const clasprcPath = resolve(process.env.HOME || '/root', '.clasprc.json');
