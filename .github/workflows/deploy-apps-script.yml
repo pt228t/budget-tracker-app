@@ -40,16 +40,19 @@ jobs:
           APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
         run: node scripts/deploy-apps-script.mjs --dry-run
 
-      # Deploy using clasp with the refresh token.
-      # The deploy script writes these to ~/.clasprc.json and clasp handles
-      # getting a fresh access token automatically.
+      # Write clasp credentials from secret. CLASPRC_JSON is the full
+      # ~/.clasprc.json from a working local clasp login — contains refresh_token
+      # so access_token auto-refreshes when expired. No manual rotation needed.
+      - name: Write clasp credentials
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: echo "$CLASPRC_JSON" > ~/.clasprc.json
+
       - name: Deploy to Apps Script
         if: ${{ github.event.inputs.dry_run != 'true' }}
         env:
           APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
-          CLASP_REFRESH_TOKEN: ${{ secrets.CLASP_REFRESH_TOKEN }}
-          CLASP_CLIENT_ID: ${{ secrets.CLASP_CLIENT_ID }}
-          CLASP_CLIENT_SECRET: ${{ secrets.CLASP_CLIENT_SECRET }}
           JOINT_SPEND_SHEET_ID: ${{ secrets.JOINT_SPEND_SHEET_ID }}
         run: node scripts/deploy-apps-script.mjs
 

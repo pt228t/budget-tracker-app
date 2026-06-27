@@ -17,9 +17,10 @@
  *   4. Dry-run flag prints what would be pushed without actually pushing
  *   5. CI=true env skips interactive prompts and fails fast on any error
  *
- * Required secrets (GitHub Actions / local .env):
- *   CLASP_ACCESS_TOKEN   — OAuth2 access token for the service account
+ * Required secrets (GitHub Actions):
+ *   CLASPRC_JSON         — Full contents of ~/.clasprc.json from a working clasp login
  *   APPS_SCRIPT_ID       — The script project ID (from script.google.com URL)
+ *   JOINT_SPEND_SHEET_ID — Joint-spend Google Sheet ID (injected into Config.gs at deploy time)
  *
  * First-time local setup: see APPS_SCRIPT_SETUP.md
  */
@@ -159,48 +160,11 @@ function writeClasp(scriptId) {
   log(`Wrote .clasp.json with scriptId: ${scriptId.slice(0, 8)}...`);
 }
 
-// ─── Step 5: Authenticate clasp with token from env ──────────────────────────
-/**
- * Reads clasp credentials from the environment and writes a complete 
- * ~/.clasprc.json. Clasp will automatically use the refresh token to 
- * get a fresh access token when it runs.
- */
-function authenticateClasp() {
-  const refreshToken = process.env.CLASP_REFRESH_TOKEN;
-  const clientId     = process.env.CLASP_CLIENT_ID;
-  const clientSecret = process.env.CLASP_CLIENT_SECRET;
-
-  if (!refreshToken || !clientId || !clientSecret) {
-    if (IS_CI) {
-      fail(
-        'Missing clasp credentials in environment.\n' +
-        '  → Make sure CLASP_REFRESH_TOKEN, CLASP_CLIENT_ID, and CLASP_CLIENT_SECRET\n' +
-        '  → are all set as GitHub repository secrets.'
-      );
-    }
-    // Local dev: assume user is already logged in via `npm run clasp:login`
-    log('Clasp credentials not found in env — using local clasp login session.');
-    return;
-  }
-
-  // Write .clasprc.json in clasp 3.x format.
-  // Clasp 2.x used { token, oauth2ClientSettings }; clasp 3.x uses { tokens: { default: {...} } }.
-  const clasprc = {
-    tokens: {
-      default: {
-        client_id:     clientId,
-        client_secret: clientSecret,
-        type:          'authorized_user',
-        refresh_token: refreshToken,
-        access_token:  'dummy-access-token-to-force-refresh',
-      },
-    },
-  };
-
-  const clasprcPath = resolve(process.env.HOME || '/root', '.clasprc.json');
-  writeFileSync(clasprcPath, JSON.stringify(clasprc));
-  log('Clasp credentials injected into ~/.clasprc.json');
-}
+// ─── Step 5: Auth ────────────────────────────────────────────────────────────
+// ~/.clasprc.json is written by the "Write clasp credentials" workflow step
+// using the CLASPRC_JSON secret (full working local file with refresh_token).
+// clasp/google-auth-library auto-refreshes access_token when expired.
+// No-op here — auth is handled entirely in the workflow, not this script.
 
 // ─── Step 6: Push via clasp ───────────────────────────────────────────────────
 function pushWithClasp() {
@@ -285,7 +249,6 @@ async function main() {
 
   injectEnvVars();
   writeClasp(scriptId);
-  authenticateClasp();
   pushWithClasp();
 
   success('Deploy complete. Verify in the Apps Script editor:');
