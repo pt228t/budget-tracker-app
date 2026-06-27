@@ -176,3 +176,8 @@ function getAllowedUsers(ss) {
   if (!value) return [];
   return value.split(',').map(function(e) { return e.trim().toLowerCase(); }).filter(Boolean);
 }
+
+// ─── CI-injected constants ─────────────────────────────────────────────────────
+// JOINT_SPEND_SPREADSHEET_ID is replaced at deploy time by deploy-apps-script.mjs
+// using the JOINT_SPEND_SHEET_ID GitHub Secret. Do not hardcode a real ID here.
+var JOINT_SPEND_SPREADSHEET_ID = 'JOINT_SPEND_ID_PLACEHOLDER';

@@ -50,11 +50,14 @@ function _runSync() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var config = getAppConfig(ss);
 
-  var sourceId  = config[CONFIG_KEY.SOURCE_SPREADSHEET_ID];
+  // CI-injected constant takes precedence; App_Config tab is fallback for manual/local runs
+  var sourceId = (typeof JOINT_SPEND_SPREADSHEET_ID !== 'undefined' && JOINT_SPEND_SPREADSHEET_ID !== 'JOINT_SPEND_ID_PLACEHOLDER')
+    ? JOINT_SPEND_SPREADSHEET_ID
+    : config[CONFIG_KEY.SOURCE_SPREADSHEET_ID];
   var sourceTab = config[CONFIG_KEY.SOURCE_RECURRING_ITEMS_TAB] || 'Recurring_Items';
 
   if (!sourceId) {
-    throw new Error('source_spreadsheet_id not set in App_Config');
+    throw new Error('source_spreadsheet_id not set — add JOINT_SPEND_SHEET_ID GitHub Secret or set App_Config tab');
   }
 
   var sourceItems = _readRecurringItems(sourceId, sourceTab);

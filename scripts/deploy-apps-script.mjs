@@ -248,6 +248,27 @@ function printDryRunSummary(scriptId) {
   log('');
 }
 
+// ─── Step 7.5: Inject env vars into .gs source files ─────────────────────────
+// Replaces placeholder tokens in .gs files with values from env vars.
+// Only runs during actual deploy (not dry-run). CI checkout is ephemeral
+// so modified files are never committed back.
+function injectEnvVars() {
+  const jointSpendId = process.env.JOINT_SPEND_SHEET_ID;
+  if (!jointSpendId) {
+    if (IS_CI) {
+      fail('JOINT_SPEND_SHEET_ID env var not set — required for deploy. Add it as a GitHub Secret.');
+    }
+    warn('JOINT_SPEND_SHEET_ID not set — JOINT_SPEND_ID_PLACEHOLDER remains in Config.gs (local dev only)');
+    return;
+  }
+
+  const configPath = resolve(GS_DIR, 'Config.gs');
+  const original = readFileSync(configPath, 'utf8');
+  const injected = original.replace(/JOINT_SPEND_ID_PLACEHOLDER/g, jointSpendId);
+  writeFileSync(configPath, injected, 'utf8');
+  log(`Injected JOINT_SPEND_SHEET_ID into Config.gs (${jointSpendId.slice(0, 8)}...)`);
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   log('BudgetPulse Apps Script deploy');
@@ -264,6 +285,7 @@ async function main() {
     return;
   }
 
+  injectEnvVars();
   writeClasp(scriptId);
   authenticateClasp();
   pushWithClasp();

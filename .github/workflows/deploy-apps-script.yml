@@ -50,6 +50,7 @@ jobs:
           CLASP_REFRESH_TOKEN: ${{ secrets.CLASP_REFRESH_TOKEN }}
           CLASP_CLIENT_ID: ${{ secrets.CLASP_CLIENT_ID }}
           CLASP_CLIENT_SECRET: ${{ secrets.CLASP_CLIENT_SECRET }}
+          JOINT_SPEND_SHEET_ID: ${{ secrets.JOINT_SPEND_SHEET_ID }}
         run: node scripts/deploy-apps-script.mjs
 
       - name: Dry run summary
