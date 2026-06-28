@@ -4,7 +4,7 @@
  */
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID';
-const SCOPES = 'https://www.googleapis.com/auth/spreadsheets email profile';
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly email profile';
 
 let tokenClient;
 let accessToken = null;

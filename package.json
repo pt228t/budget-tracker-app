@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "deploy:gs": "node scripts/deploy-apps-script.mjs",
     "deploy:gs:dry": "node scripts/deploy-apps-script.mjs --dry-run",
-    "clasp:login": "clasp login"
+    "clasp:login": "clasp login",
+    "dev:agent": "vite --host 127.0.0.1 --port 4173 & echo 'Dev server starting at http://127.0.0.1:4173 — open Claude Code in this dir to use Playwright MCP'"
   },
   "devDependencies": {
     "@google/clasp": "^3.3.0",

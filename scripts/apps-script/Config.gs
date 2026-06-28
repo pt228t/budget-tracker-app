@@ -166,6 +166,28 @@ function getConfigValue(ss, key, defaultValue) {
 }
 
 /**
+ * Writes a single key-value pair to the App_Config tab.
+ * Finds the row by key and updates column B. No-ops if key not found.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} ss
+ * @param {string} key
+ * @param {string} value
+ */
+function setConfigValue(ss, key, value) {
+  var sheet = ss.getSheetByName(SHEET.APP_CONFIG);
+  if (!sheet) return;
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 1) return;
+  var keys = sheet.getRange(1, COL.APP_CONFIG.KEY, lastRow, 1).getValues();
+  for (var i = 0; i < keys.length; i++) {
+    if (String(keys[i][0]).trim() === key) {
+      sheet.getRange(i + 1, COL.APP_CONFIG.VALUE).setValue(value);
+      return;
+    }
+  }
+}
+
+/**
  * Returns allowed user emails as an array.
  *
  * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} ss

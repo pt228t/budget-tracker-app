@@ -6,7 +6,7 @@ vi.mock('../../src/js/auth.js', () => ({
   getAccessToken: vi.fn(() => 'mock_token')
 }));
 
-// Mock sheets-api.js
+// Mock sheets-api.js — default: spreadsheet ID already in localStorage
 vi.mock('../../src/js/sheets-api.js', () => ({
   getSpreadsheetId: vi.fn(() => 'MOCK_SPREADSHEET_ID'),
   setSpreadsheetId: vi.fn(),
@@ -139,5 +139,78 @@ describe('Setup / Bootstrap Module', () => {
 
     const ready = await isSpreadsheetReady();
     expect(ready).toBe(true);
+  });
+});
+
+describe('bootstrapSpreadsheet — Drive-based sheet discovery (BUG-006)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    global.fetch = vi.fn();
+  });
+
+  it('reuses existing Drive sheet when localStorage is empty', async () => {
+    const { getSpreadsheetId, setSpreadsheetId } = await import('../../src/js/sheets-api.js');
+    getSpreadsheetId.mockReturnValueOnce(null);
+
+    // Drive search returns existing sheet
+    global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ files: [{ id: 'EXISTING_SHEET_ID', name: 'BudgetPulse', createdTime: '2026-06-22T00:00:00Z' }] })
+      })
+      // metadata fetch (all tabs exist)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ sheets: REQUIRED_TABS.map(t => ({ properties: { title: t } })) })
+      });
+
+    await bootstrapSpreadsheet();
+
+    expect(setSpreadsheetId).toHaveBeenCalledWith('EXISTING_SHEET_ID');
+    // Drive was queried, Sheets create was NOT called
+    const driveCall = global.fetch.mock.calls.find(c => c[0].includes('/drive/v3/files'));
+    const sheetsCreateCall = global.fetch.mock.calls.find(c => c[0].includes('/spreadsheets') && c[1]?.method === 'POST');
+    expect(driveCall).toBeDefined();
+    expect(sheetsCreateCall).toBeUndefined();
+  });
+
+  it('creates new sheet when localStorage empty and Drive has no match', async () => {
+    const { getSpreadsheetId, setSpreadsheetId } = await import('../../src/js/sheets-api.js');
+    getSpreadsheetId.mockReturnValueOnce(null);
+
+    global.fetch
+      // Drive search: no files
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ files: [] }) })
+      // Sheets create
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ spreadsheetId: 'NEW_SHEET_ID' }) })
+      // metadata (all tabs exist)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ sheets: REQUIRED_TABS.map(t => ({ properties: { title: t } })) })
+      });
+
+    await bootstrapSpreadsheet();
+
+    expect(setSpreadsheetId).toHaveBeenCalledWith('NEW_SHEET_ID');
+  });
+
+  it('creates new sheet when Drive search fails', async () => {
+    const { getSpreadsheetId, setSpreadsheetId } = await import('../../src/js/sheets-api.js');
+    getSpreadsheetId.mockReturnValueOnce(null);
+
+    global.fetch
+      // Drive search: API error
+      .mockResolvedValueOnce({ ok: false, status: 403 })
+      // Sheets create
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ spreadsheetId: 'FALLBACK_SHEET_ID' }) })
+      // metadata (all tabs exist)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ sheets: REQUIRED_TABS.map(t => ({ properties: { title: t } })) })
+      });
+
+    await bootstrapSpreadsheet();
+
+    expect(setSpreadsheetId).toHaveBeenCalledWith('FALLBACK_SHEET_ID');
   });
 });

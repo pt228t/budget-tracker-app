@@ -6,7 +6,7 @@ import {
   qsa,
 } from './utils.js';
 import { initAuth, isUserAuthenticated, signOut } from './src/js/auth.js';
-import { onTokenExpired } from './src/js/sheets-api.js';
+import { onTokenExpired, isUserAllowed } from './src/js/sheets-api.js';
 import { bootstrapSpreadsheet } from './src/js/setup.js';
 import { clearSessionCaches } from './src/js/cache.js';
 import {
@@ -49,6 +49,11 @@ function setRoute(route) {
 }
 
 function updateRoute(route) {
+  if (route !== 'login' && !isUserAuthenticated()) {
+    setRoute('login');
+    return;
+  }
+
   qsa('[data-page]').forEach((section) => {
     section.hidden = section.dataset.page !== route;
   });
@@ -65,7 +70,15 @@ function updateRoute(route) {
   document.title = `BudgetPulse | ${ROUTE_TITLES[route]}`;
 }
 
-function updateAuthControls() {}
+function updateAuthControls() {
+  const authenticated = isUserAuthenticated();
+  qsa('.shell-nav-link').forEach((link) => {
+    const route = link.dataset.route;
+    if (route && route !== 'login' && route !== 'logout') {
+      link.style.display = authenticated ? '' : 'none';
+    }
+  });
+}
 
 function setSyncMessage(message) {
   const statusText = qs('.sync-status span:last-child');
@@ -269,16 +282,38 @@ function initializeIcons() {
   }
 }
 
-async function handleAuthSuccess() {
+async function handleAuthSuccess(accessToken) {
   updateAuthControls();
-  setSyncMessage('Checking BudgetPulse spreadsheet...');
+  setSyncMessage('Verifying authorization...');
   try {
-    await bootstrapSpreadsheet();
+    const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch user profile from Google');
+    }
+    const profile = await response.json();
+
+    const setupReport = await bootstrapSpreadsheet(profile.email);
+    if (!setupReport.ready) {
+      throw new Error('Bootstrap failed: ' + setupReport.errors.join(', '));
+    }
+    
+    const allowed = await isUserAllowed(profile.email);
+    if (!allowed) {
+      alert(`Access Denied: Your email (${profile.email}) is not authorized to use this app. Contact the owner.`);
+      signOut();
+      return;
+    }
+
     setRoute('dashboard');
     hydrateCategoryData({ force: true });
     setSyncMessage('Ready');
   } catch (err) {
+    console.error(err);
     setSyncMessage('Setup failed: ' + err.message);
+    signOut();
   }
 }
 
@@ -297,17 +332,7 @@ function initializeIntegrations() {
     setRoute('login');
   });
 
-  if (isUserAuthenticated()) {
-    updateAuthControls();
-    setSyncMessage('Checking BudgetPulse spreadsheet...');
-    bootstrapSpreadsheet().then(() => {
-      setRoute('dashboard');
-      hydrateCategoryData();
-      setSyncMessage('Ready');
-    }).catch(err => {
-      setSyncMessage('Setup failed: ' + err.message);
-    });
-  } else {
+  if (!isUserAuthenticated()) {
     updateAuthControls();
   }
 }

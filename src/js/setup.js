@@ -95,10 +95,17 @@ export async function bootstrapSpreadsheet(userEmail = '') {
     let spreadsheetId = getSpreadsheetId();
 
     if (!spreadsheetId) {
-      console.log('[Setup] No spreadsheet ID found. Creating entirely new BudgetPulse workbook...');
-      spreadsheetId = await createNewWorkbook();
-      setSpreadsheetId(spreadsheetId);
-      console.log(`[Setup] Workbook created with ID: ${spreadsheetId}`);
+      console.log('[Setup] No spreadsheet ID in localStorage. Searching Drive for existing BudgetPulse sheet...');
+      spreadsheetId = await findExistingWorkbook();
+      if (spreadsheetId) {
+        console.log(`[Setup] Found existing BudgetPulse sheet: ${spreadsheetId}`);
+        setSpreadsheetId(spreadsheetId);
+      } else {
+        console.log('[Setup] No existing sheet found. Creating new BudgetPulse workbook...');
+        spreadsheetId = await createNewWorkbook();
+        setSpreadsheetId(spreadsheetId);
+        console.log(`[Setup] Workbook created with ID: ${spreadsheetId}`);
+      }
     }
 
     // 2. Fetch current tabs from the spreadsheet
@@ -154,6 +161,31 @@ export async function bootstrapSpreadsheet(userEmail = '') {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Search Google Drive for an existing BudgetPulse spreadsheet owned by the user.
+ * Returns the spreadsheet ID of the oldest match, or null if none found.
+ * Prevents duplicate sheet creation when localStorage is cleared.
+ */
+async function findExistingWorkbook() {
+  const token = getAccessToken();
+  const q = encodeURIComponent(
+    "name='BudgetPulse' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false"
+  );
+  const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,createdTime)&orderBy=createdTime&pageSize=1`;
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!response.ok) {
+    console.warn(`[Setup] Drive search failed (${response.status}) — will create new sheet`);
+    return null;
+  }
+
+  const data = await response.json();
+  return data.files && data.files.length > 0 ? data.files[0].id : null;
+}
 
 /**
  * Create a brand new Google Sheet workbook.
