@@ -192,4 +192,26 @@ Implement Month-over-Month (MoM) budget vs actual spending trends (B-019) and To
 - [analytics.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/analytics.js) — Added `calculateMoMData()` and `renderMoMChart()`, updated `initAnalytics()` to support history sheets and category name mappings.
 - Tests: Added unit tests to [analytics.test.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/tests/unit/analytics.test.js).
 
+---
+
+# Sprint 13: Log Management (Advanced Filters & CSV Export)
+
+## Goal
+Implement historical log management in the Expense Log view, including advanced filters by person, category, and date range (B-030), and CSV export capability (B-033) for full data portability.
+
+## Tasks Completed
+- **B-030: Advanced log filtering**
+  - Added filter dropdowns and date selectors dynamically populated with active categories and authorized users' email list on the transaction history card.
+  - Implemented client-side filtering logic `_applyFilters` in the expense logger to filter loaded transactions dynamically without making network requests.
+- **B-033: CSV Data Export**
+  - Added an "Export as CSV" button next to the transaction history header.
+  - Implemented client-side CSV builder `_triggerCSVExport` that formats, escapes double quotes and commas, and initiates download of currently filtered transactions as a `.csv` file.
+  - Added Unit Tests in [log-management.test.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/tests/unit/log-management.test.js).
+
+## Completed Code & Files
+- [index.html](file:///Users/prashant228/Documents/Projects/budget-tracker-app/index.html) — Added filter selectors, date inputs, and CSV export button.
+- [expense-logger.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/expense-logger.js) — Implemented client-side filters, dynamic option population, add/remove sync triggers, and CSV builder.
+- Tests: Created [log-management.test.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/tests/unit/log-management.test.js).
+
+
 

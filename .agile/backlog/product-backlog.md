@@ -61,12 +61,12 @@
 | B-027 | Frontend: Day-of-week spending heatmap | Analytics | M5 | S9 | `TODO` |
 | B-028 | Frontend: Person-wise spending split chart | Analytics | M5 | S9 | `TODO` |
 | B-029 | Apps Script: Recurring payment reminder (3 days before) | Notifications | M5 | S9 | `TODO` |
-| B-030 | Frontend: Advanced filters (by person, category, date range) | Analytics | M5 | S9 | `TODO` |
+| B-030 | Frontend: Advanced filters (by person, category, date range) | Analytics | M5 | S9 | `DONE` |
 | B-031 | Frontend: Manual sync trigger button | Sync | M5 | S10 | `DONE` |
 | B-032 | Frontend: Settings page (config management) | Settings | M5 | S10 | `DONE` |
 | B-038 | Frontend: Admin console to manage authorized users (UI) | Auth | M5 | S10 | `DONE` |
 | B-039 | Frontend: Detect stale/wrong bound spreadsheet and prompt rebind | Auth/Setup | M5 | S10 | `DONE` |
-| B-033 | Frontend: Export data as CSV | Export | M5 | S10 | `TODO` |
+| B-033 | Frontend: Export data as CSV | Export | M5 | S10 | `DONE` |
 | B-034 | Frontend: Dark mode toggle | UX | M5 | S10 | `TODO` |
 | B-035 | Foreign currency support (INR primary) | Feature | Future | - | `TODO` |
 | B-036 | CSV bank statement import | Feature | Future | - | `TODO` |

@@ -46,6 +46,9 @@ const TC = {
 
 // ─── Public Entry Point ───────────────────────────────────────────────────────
 
+let _allLoadedTransactions = [];
+let _activeCategories = [];
+
 /**
  * Initialises the expense logger.
  * Enhances the existing form, wires events, and loads recent transactions.
@@ -89,6 +92,28 @@ export async function initExpenseLogger(formId, listId) {
   _wireVendorSuggestion(form);
   _wireSubmit(form, listEl);
   _wireListActions(listEl);
+
+  // Wire filters change event listeners
+  const filterPaidBy = document.getElementById('bp-filter-paid-by');
+  const filterCat = document.getElementById('bp-filter-category');
+  const filterStart = document.getElementById('bp-filter-start-date');
+  const filterEnd = document.getElementById('bp-filter-end-date');
+
+  const onFilterChange = () => _applyFilters(listEl);
+  [filterPaidBy, filterCat, filterStart, filterEnd].forEach(el => {
+    if (el) {
+      el.addEventListener('change', onFilterChange);
+      el.addEventListener('input', onFilterChange);
+    }
+  });
+
+  // Wire CSV export button
+  const exportBtn = document.getElementById('bp-export-csv');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      _triggerCSVExport(listEl);
+    });
+  }
 
   await _loadRecentTransactions(listEl);
 }
@@ -251,31 +276,171 @@ async function _handleSubmit(form, listEl) {
 // ─── Recent Transactions ──────────────────────────────────────────────────────
 
 async function _loadRecentTransactions(listEl) {
-  const today = new Date();
-  const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-
   listEl.innerHTML = '<p class="text-muted" style="padding:12px;">Loading…</p>';
 
-  let rows = getTransactionsCache(month);
+  try {
+    const [transactionsData, categoriesData, users] = await Promise.all([
+      readRange(TRANSACTIONS_RANGE).catch(() => []),
+      readRange('Budget_Categories!A:H').catch(() => []),
+      getAuthorizedUsers().catch(() => []),
+    ]);
 
-  if (!rows) {
-    try {
-      const allRows = await readRange(TRANSACTIONS_RANGE);
-      rows = allRows.slice(1).filter(r => String(r[TC.MONTH]).trim() === month);
-      setTransactionsCache(month, rows);
-    } catch (err) {
-      listEl.innerHTML = '<p class="text-muted" style="padding:12px;">Could not load transactions.</p>';
-      console.error('[BudgetPulse] readRange failed:', err);
-      return;
-    }
+    _allLoadedTransactions = transactionsData.slice(1);
+    
+    // Extract active categories
+    _activeCategories = categoriesData.slice(1).map(row => ({
+      id: row[0],
+      name: row[1],
+      status: row[5]
+    })).filter(cat => cat.status === 'Active');
+
+    // Populate filter selectors
+    _populateFilterOptions(users);
+
+    _applyFilters(listEl);
+  } catch (err) {
+    listEl.innerHTML = '<p class="text-muted" style="padding:12px;">Could not load transactions.</p>';
+    console.error('[BudgetPulse] _loadRecentTransactions failed:', err);
+  }
+}
+
+function _populateFilterOptions(users = []) {
+  const paidBySelect = document.getElementById('bp-filter-paid-by');
+  const catSelect = document.getElementById('bp-filter-category');
+
+  if (paidBySelect) {
+    const options = ['<option value="">All Users</option>'];
+    users.forEach(email => {
+      options.push(`<option value="${email}">${email}</option>`);
+    });
+    paidBySelect.innerHTML = options.join('');
   }
 
-  _renderTransactionsList(listEl, rows, _buildCategoryMap());
+  if (catSelect) {
+    const options = ['<option value="">All Categories</option>'];
+    _activeCategories.forEach(cat => {
+      options.push(`<option value="${cat.id}">${cat.name}</option>`);
+    });
+    catSelect.innerHTML = options.join('');
+  }
+}
+
+function _applyFilters(listEl) {
+  const paidBy = document.getElementById('bp-filter-paid-by')?.value ?? '';
+  const categoryId = document.getElementById('bp-filter-category')?.value ?? '';
+  const startDateStr = document.getElementById('bp-filter-start-date')?.value ?? '';
+  const endDateStr = document.getElementById('bp-filter-end-date')?.value ?? '';
+
+  const startDate = startDateStr ? new Date(startDateStr) : null;
+  const endDate = endDateStr ? new Date(endDateStr) : null;
+  if (endDate) {
+    endDate.setHours(23, 59, 59, 999);
+  }
+
+  const filtered = _allLoadedTransactions.filter(row => {
+    // 1. Paid By filter
+    const rowPaidBy = String(row[TC.PAID_BY] ?? '').trim().toLowerCase();
+    if (paidBy && rowPaidBy !== paidBy.toLowerCase()) {
+      return false;
+    }
+
+    // 2. Category filter
+    const rowCat = String(row[TC.CATEGORY_ID] ?? '').trim();
+    if (categoryId && rowCat !== categoryId) {
+      return false;
+    }
+
+    // 3. Date range filter
+    const rowDateStr = String(row[TC.DATE] ?? '').trim();
+    if (rowDateStr) {
+      const rowDate = new Date(rowDateStr);
+      if (startDate && rowDate < startDate) return false;
+      if (endDate && rowDate > endDate) return false;
+    }
+
+    return true;
+  });
+
+  _renderTransactionsList(listEl, filtered, _buildCategoryMap());
+}
+
+function _triggerCSVExport(listEl) {
+  const paidBy = document.getElementById('bp-filter-paid-by')?.value ?? '';
+  const categoryId = document.getElementById('bp-filter-category')?.value ?? '';
+  const startDateStr = document.getElementById('bp-filter-start-date')?.value ?? '';
+  const endDateStr = document.getElementById('bp-filter-end-date')?.value ?? '';
+
+  const startDate = startDateStr ? new Date(startDateStr) : null;
+  const endDate = endDateStr ? new Date(endDateStr) : null;
+  if (endDate) {
+    endDate.setHours(23, 59, 59, 999);
+  }
+
+  const filtered = _allLoadedTransactions.filter(row => {
+    const rowPaidBy = String(row[TC.PAID_BY] ?? '').trim().toLowerCase();
+    if (paidBy && rowPaidBy !== paidBy.toLowerCase()) return false;
+
+    const rowCat = String(row[TC.CATEGORY_ID] ?? '').trim();
+    if (categoryId && rowCat !== categoryId) return false;
+
+    const rowDateStr = String(row[TC.DATE] ?? '').trim();
+    if (rowDateStr) {
+      const rowDate = new Date(rowDateStr);
+      if (startDate && rowDate < startDate) return false;
+      if (endDate && rowDate > endDate) return false;
+    }
+
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    alert('No transactions match the current filters to export!');
+    return;
+  }
+
+  const catMap = _buildCategoryMap();
+  const csvHeaders = ['Transaction ID', 'Date', 'Month', 'Amount', 'Category', 'Sub-category', 'Description', 'Paid By', 'Funding Source', 'Logged By', 'Logged At', 'Notes'];
+
+  const csvRows = filtered.map(row => {
+    const catName = catMap[row[TC.CATEGORY_ID]] || row[TC.CATEGORY_ID] || '';
+    return [
+      row[TC.ID] ?? '',
+      row[TC.DATE] ?? '',
+      row[TC.MONTH] ?? '',
+      row[TC.AMOUNT] ?? 0,
+      catName,
+      row[TC.SUB_CATEGORY] ?? '',
+      row[TC.DESCRIPTION] ?? '',
+      row[TC.PAID_BY] ?? '',
+      row[TC.FUNDING_SOURCE] ?? '',
+      row[TC.LOGGED_BY] ?? '',
+      row[TC.LOGGED_AT] ?? '',
+      row[TC.NOTES] ?? ''
+    ].map(val => {
+      const text = String(val).replace(/"/g, '""');
+      if (text.includes(',') || text.includes('"') || text.includes('\n')) {
+        return `"${text}"`;
+      }
+      return text;
+    });
+  });
+
+  const csvContent = [csvHeaders.join(','), ...csvRows.map(r => r.join(','))].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `BudgetPulse_Transactions_Export_${_toDateString(new Date())}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 function _renderTransactionsList(listEl, rows, catMap) {
   if (!rows.length) {
-    listEl.innerHTML = '<p class="text-muted" style="padding:12px;">No expenses logged this month yet.</p>';
+    listEl.innerHTML = '<p class="text-muted" style="padding:12px;">No matching transactions found.</p>';
     return;
   }
 
@@ -287,14 +452,13 @@ function _renderTransactionsList(listEl, rows, catMap) {
 }
 
 function _prependTransactionRow(listEl, row) {
-  const emptyMsg = listEl.querySelector('p.text-muted');
-  if (emptyMsg) emptyMsg.remove();
-  listEl.insertAdjacentHTML('afterbegin', renderTransactionItem(row, _buildCategoryMap()));
+  _allLoadedTransactions.unshift(row);
+  _applyFilters(listEl);
 }
 
 function _removeTransactionRow(listEl, txnId) {
-  const el = listEl.querySelector(`[data-txn-id="${CSS.escape(txnId)}"]`);
-  if (el) el.remove();
+  _allLoadedTransactions = _allLoadedTransactions.filter(r => r[TC.ID] !== txnId);
+  _applyFilters(listEl);
 }
 
 // ─── Pure Exported Functions (testable) ──────────────────────────────────────

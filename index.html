@@ -197,11 +197,39 @@
           </article>
 
           <article class="card section-panel section-panel-wide mt-4">
-            <div class="panel-header">
-              <h2>Recent Transactions</h2>
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+              <h2>Transaction History</h2>
+              <button type="button" id="bp-export-csv" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 0.8125rem;">Export as CSV</button>
             </div>
-            <ul id="recent-transactions-list" class="list-group">
-            </ul>
+            
+            <!-- Filter Controls -->
+            <div class="filter-controls-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; padding: 12px; background: var(--color-bg-surface-hover); border-radius: 8px; margin-bottom: 16px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;" for="bp-filter-paid-by">Paid By</label>
+                <select class="form-control form-control-sm" id="bp-filter-paid-by" style="font-size: 0.8125rem; height: 32px; padding: 4px 8px;">
+                  <option value="">All Users</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;" for="bp-filter-category">Category</label>
+                <select class="form-control form-control-sm" id="bp-filter-category" style="font-size: 0.8125rem; height: 32px; padding: 4px 8px;">
+                  <option value="">All Categories</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;" for="bp-filter-start-date">Start Date</label>
+                <input class="form-control form-control-sm" id="bp-filter-start-date" type="date" style="font-size: 0.8125rem; height: 32px; padding: 4px 8px;" />
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;" for="bp-filter-end-date">End Date</label>
+                <input class="form-control form-control-sm" id="bp-filter-end-date" type="date" style="font-size: 0.8125rem; height: 32px; padding: 4px 8px;" />
+              </div>
+            </div>
+
+            <div class="scroll-container" style="max-height: 400px; overflow-y: auto;">
+              <ul id="recent-transactions-list" class="list-group">
+              </ul>
+            </div>
           </article>
         </section>
 
