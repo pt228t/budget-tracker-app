@@ -172,3 +172,24 @@ Implement personal payment tracking (B-025) and month-end personal payment summa
 - [app.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/app.js) — Wired `renderPersonalSettlement()` calls during category data hydration.
 - Tests: Created [personal-settlement.test.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/tests/unit/personal-settlement.test.js) test file.
 
+---
+
+# Sprint 12: Analytics Enhancements (MoM trends & Top Expenses)
+
+## Goal
+Implement Month-over-Month (MoM) budget vs actual spending trends (B-019) and Top 5 expenses insights (B-020) in the Analytics dashboard to support production-level tracking.
+
+## Tasks Completed
+- **B-019: Month-over-Month spending trend analysis**
+  - Added `calculateMoMData` to aggregate spending and budget history chronologically over the last 6 months.
+  - Implemented dynamic budget history fallback (defaults to current active category budget sums if no historical record exists for a month).
+  - Implemented `renderMoMChart` using Chart.js to render a beautiful dual-bar chart showing Total Budget vs Actual Spend per month on the `#analytics-chart` canvas.
+- **B-020: Top 5 expenses insights**
+  - Updated category translation in `initAnalytics` so that the Top 5 Expenses table displays human-readable category names (e.g. "Rent", "Grocery") instead of raw sheet IDs (e.g. `cat_mqwpsyxjyh39`).
+  - Added Unit Tests for `calculateMoMData` in `tests/unit/analytics.test.js`.
+
+## Completed Code & Files
+- [analytics.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/analytics.js) — Added `calculateMoMData()` and `renderMoMChart()`, updated `initAnalytics()` to support history sheets and category name mappings.
+- Tests: Added unit tests to [analytics.test.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/tests/unit/analytics.test.js).
+
+

@@ -45,8 +45,8 @@
 | B-016 | Frontend: Sub-category tagging in expense form | Logging | M3 | S5 | `DONE` |
 | B-017 | Vendor pattern suggestion engine | Logging | M3 | S6 | `DONE` |
 | B-018 | Frontend: Edit/delete transactions | Logging | M3 | S6 | `DONE` |
-| B-019 | Frontend: Month-over-month comparison | Analytics | M3 | S6 | `TODO` |
-| B-020 | Frontend: Top 5 expenses table | Analytics | M3 | S6 | `TODO` |
+| B-019 | Frontend: Month-over-month comparison | Analytics | M3 | S6 | `DONE` |
+| B-020 | Frontend: Top 5 expenses table | Analytics | M3 | S6 | `DONE` |
 | B-021 | Apps Script: Weekly summary email (Sunday) | Notifications | M4 | S7 | `DONE` |
 | B-022 | Apps Script: 80% budget threshold alert | Notifications | M4 | S7 | `DONE` |
 | B-023 | Apps Script: Monthly report (1st of month) | Notifications | M4 | S7 | `DONE` |

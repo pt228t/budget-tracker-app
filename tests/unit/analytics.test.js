@@ -5,6 +5,7 @@ import {
   getTopExpenses,
   filterByMonth,
   renderTopExpensesTable,
+  calculateMoMData,
 } from '../../src/js/analytics.js';
 
 describe('Analytics Data Transformation', () => {
@@ -123,5 +124,41 @@ describe('renderTopExpensesTable', () => {
     const tbody = document.querySelector('#testTable tbody');
     expect(tbody.innerHTML).toContain('Big Bazaar');
     expect(tbody.innerHTML).toContain('850');
+  });
+});
+
+describe('calculateMoMData', () => {
+  it('calculates MoM data correctly with fallbacks', () => {
+    const txRows = [
+      ['tx1', '2026-05-15', '2026-05', '100', 'cat1', '', ''],
+      ['tx2', '2026-06-10', '2026-06', '350', 'cat1', '', ''],
+      ['tx3', '2026-06-15', '2026-06', '50',  'cat2', '', ''],
+    ];
+
+    const catRows = [
+      ['cat1', 'Food', '300', '', '', 'Active'],
+      ['cat2', 'Rent', '1000', '', '', 'Active'],
+      ['cat3', 'Gym', '100', '', '', 'Inactive'],
+    ];
+
+    const bhRows = [
+      // month, category_id, budget_amount
+      ['2026-05', 'cat1', '250'],
+      ['2026-05', 'cat2', '1000'],
+    ];
+
+    const result = calculateMoMData(txRows, catRows, bhRows);
+
+    // Should return sorted months: May 26, Jun 26
+    expect(result.labels).toEqual(['May 26', 'Jun 26']);
+
+    // May budget = 1250. Spent = 100.
+    expect(result.budgetData[0]).toBe(1250);
+    expect(result.actualData[0]).toBe(100);
+
+    // June budget has no history, falls back to active categories sum = 300 + 1000 = 1300.
+    // Spent = 350 + 50 = 400.
+    expect(result.budgetData[1]).toBe(1300);
+    expect(result.actualData[1]).toBe(400);
   });
 });

@@ -7,13 +7,15 @@ export async function initAnalytics(containerId) {
     container.innerHTML = '<p class="text-muted" style="padding:12px;">Loading analytics…</p>';
 
     try {
-        const [transactionsData, categoriesData] = await Promise.all([
-            readRange('Transactions!A:M'),
-            readRange('Budget_Categories!A:H'),
+        const [transactionsData, categoriesData, budgetHistoryData] = await Promise.all([
+            readRange('Transactions!A:M').catch(() => []),
+            readRange('Budget_Categories!A:H').catch(() => []),
+            readRange('Budget_History!A:D').catch(() => []),
         ]);
 
         const allTxRows = transactionsData.slice(1);
         const catRows   = categoriesData.slice(1);
+        const bhRows    = budgetHistoryData.slice(1);
 
         const today = new Date();
         const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -26,12 +28,27 @@ export async function initAnalytics(containerId) {
                     <p class="text-muted" style="font-size:0.875rem;">Log an expense to see analytics here.</p>
                 </div>
             `;
+            // Still render the MoM trend even if current month has no transactions!
+            const momData = calculateMoMData(allTxRows, catRows, bhRows);
+            renderMoMChart('analytics-chart', momData);
             return;
         }
 
         const expensesByCategory = calculateExpensesByCategory(txRows);
         const budgetVsActual = calculateBudgetVsActual(txRows, catRows);
         const topExpenses = getTopExpenses(txRows);
+
+        // Map category IDs to names for the top expenses display
+        const catMap = {};
+        for (const row of catRows) {
+            catMap[row[0]] = row[1];
+        }
+        const topExpensesWithNames = topExpenses.map(exp => ({
+            ...exp,
+            categoryId: catMap[exp.categoryId] || exp.categoryId
+        }));
+
+        const momData = calculateMoMData(allTxRows, catRows, bhRows);
 
         container.innerHTML = `
             <div class="analytics-charts" style="display: flex; gap: 20px; margin-bottom: 30px; justify-content: center; flex-wrap: wrap;">
@@ -60,7 +77,8 @@ export async function initAnalytics(containerId) {
 
         renderCategoryDonutChart('categoryDonutChart', expensesByCategory);
         renderBudgetBarChart('budgetBarChart', budgetVsActual);
-        renderTopExpensesTable('topExpensesTable', topExpenses);
+        renderTopExpensesTable('topExpensesTable', topExpensesWithNames);
+        renderMoMChart('analytics-chart', momData);
     } catch (err) {
         container.innerHTML = `<p class="text-danger" style="padding:12px;">Error loading analytics: ${err.message}</p>`;
     }
@@ -207,4 +225,130 @@ export function renderTopExpensesTable(tableId, topExpenses) {
             <td style="text-align: left;">${exp.categoryId || ''}</td>
         </tr>
     `).join('');
+}
+
+/**
+ * Calculates Month-over-Month total budget vs actual spend.
+ */
+export function calculateMoMData(allTxRows, catRows, bhRows) {
+    // 1. Group transactions by month
+    const actualsByMonth = {};
+    for (const row of allTxRows) {
+        const month = String(row[2] ?? '').trim();
+        const amount = parseFloat(row[3]) || 0;
+        if (month && month.match(/^\d{4}-\d{2}$/)) {
+            actualsByMonth[month] = (actualsByMonth[month] || 0) + amount;
+        }
+    }
+
+    // 2. Group budget history by month/category
+    const budgetsByMonth = {};
+    // Sum default budgets from catRows as fallback
+    const defaultTotalBudget = catRows.reduce((sum, row) => {
+        const budget = parseFloat(row[2]) || 0;
+        const status = String(row[5] ?? '').trim();
+        // Only sum Active categories
+        if (status === 'Active') {
+            return sum + budget;
+        }
+        return sum;
+    }, 0);
+
+    for (const row of bhRows) {
+        const month = String(row[0] ?? '').trim();
+        const amount = parseFloat(row[2]) || 0;
+        if (month && month.match(/^\d{4}-\d{2}$/)) {
+            budgetsByMonth[month] = (budgetsByMonth[month] || 0) + amount;
+        }
+    }
+
+    // Get list of unique months in transactions and budget history
+    const allMonthsSet = new Set([
+        ...Object.keys(actualsByMonth),
+        ...Object.keys(budgetsByMonth)
+    ]);
+    const months = Array.from(allMonthsSet).sort();
+
+    // Limit to last 6 months for clear display
+    const targetMonths = months.slice(-6);
+
+    const labels = [];
+    const budgetData = [];
+    const actualData = [];
+
+    // Helper to format YYYY-MM to MMM YY (e.g. "Jun 26")
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const formatMonthLabel = (m) => {
+        const parts = m.split('-');
+        if (parts.length < 2) return m;
+        const yr = parts[0];
+        const mn = parts[1];
+        const monthIdx = parseInt(mn, 10) - 1;
+        const yearShort = yr.substring(2);
+        return `${monthNames[monthIdx] || mn} ${yearShort}`;
+    };
+
+    for (const m of targetMonths) {
+        labels.push(formatMonthLabel(m));
+        // Fallback to defaultTotalBudget if no specific budget recorded for this month
+        budgetData.push(budgetsByMonth[m] !== undefined ? budgetsByMonth[m] : defaultTotalBudget);
+        actualData.push(actualsByMonth[m] || 0);
+    }
+
+    return { labels, budgetData, actualData };
+}
+
+/**
+ * Renders the Month-over-Month trend chart using Chart.js.
+ */
+export function renderMoMChart(canvasId, momData) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    if (window.Chart) {
+        // Destroy existing chart if any to avoid overlapping charts
+        const existingChart = window.Chart.getChart(ctx);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+
+        new window.Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: momData.labels,
+                datasets: [
+                    {
+                        label: 'Total Budget',
+                        data: momData.budgetData,
+                        backgroundColor: '#3b82f6',
+                        borderColor: '#2563eb',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Actual Spend',
+                        data: momData.actualData,
+                        backgroundColor: '#ef4444',
+                        borderColor: '#dc2626',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Month-over-Month Spending Trend'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    } else {
+        console.warn('Chart.js is not loaded. MoM Trend Chart not rendered.');
+    }
 }
