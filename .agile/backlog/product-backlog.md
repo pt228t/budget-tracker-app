@@ -181,6 +181,23 @@
 - [x] Empty state replaces preview UI when data is empty.
 - [x] Sub-categories and vendor suggestions implemented.
 
+### Sprint 6: Settings & Production Readiness (Week 6)
+**Goal:** Implement configuration settings, spreadsheet rebinding, client-side sync trigger, and UI list scrollbars for production onboarding.
+
+| ID | Task | Est (hrs) |
+|----|------|-----------|
+| B-031 | Frontend: Manual sync trigger button | 3 |
+| B-032 | Frontend: Settings page (config management) | 4 |
+| B-039 | Frontend: Detect stale/wrong bound spreadsheet and prompt rebind | 3 |
+| - | UI: Scrollbar wrapper for category list progress panel | 1 |
+
+**Definition of Done:**
+- [x] Settings tab shows current bound Spreadsheet ID with Google Sheets link.
+- [x] Settings tab allows entering a new Spreadsheet ID and verifies tab schema (bootstrap).
+- [x] Client-side "Sync Now" trigger pulls category records from joint-spend spreadsheet and syncs local categories.
+- [x] UI handles large numbers of categories by wrapping the list in a custom scrollable container.
+- [x] Unit tests added in settings-sync.test.js coverage for sync logic.
+
 ---
 
 ## Definition of Ready (for any backlog item)
