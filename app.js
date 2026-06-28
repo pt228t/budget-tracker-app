@@ -14,12 +14,12 @@ import {
   renderCategoryHealthMarkup,
   renderCategoryOptionsMarkup,
 } from './src/js/categories.js';
-import { renderDashboardHealth } from './src/js/dashboard.js';
+import { renderDashboardHealth, renderPersonalSettlement } from './src/js/dashboard.js';
 import { initExpenseLogger } from './src/js/expense-logger.js';
 import { initAnalytics } from './src/js/analytics.js';
 import { initAdminPanel, initSettingsPanel } from './src/js/admin.js';
 import { reRequestConsent } from './src/js/auth.js';
-import { onScopeInsufficient, ScopeError } from './src/js/sheets-api.js';
+import { onScopeInsufficient, ScopeError, getAuthorizedUsers } from './src/js/sheets-api.js';
 
 let _authedEmail = '';
 
@@ -176,12 +176,16 @@ async function hydrateCategoryData({ force = false } = {}) {
   initExpenseLogger('expense-log-form', 'recent-transactions-list');
 
   try {
-    setSyncMessage('Loading categories from Sheets...');
-    const { categories, summary, source } = await loadCategoryBundle({ force });
+    const { categories, summary, source, transactions } = await loadCategoryBundle({ force });
     renderCategoryOptions(categories);
     renderCategoryHealthList(categories);
     setCategoryState(summary, source);
     renderDashboardHealth(summary, 'budget-health-panel');
+
+    // Render personal settlement panel
+    const allowedUsers = await getAuthorizedUsers().catch(() => []);
+    renderPersonalSettlement(transactions, allowedUsers, _authedEmail, 'personal-settlement-panel');
+
     initAnalytics('analytics-container');
     setSyncMessage('Connected to Google Sheets');
   } catch (error) {

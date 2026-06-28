@@ -230,16 +230,50 @@ export async function loadSubCategories({ force = false } = {}) {
 }
 
 export async function loadCategoryBundle(options = {}) {
-  const [{ categories, source }, { subCategories }] = await Promise.all([
+  const [{ categories, source }, { subCategories }, transactions] = await Promise.all([
     loadCategories(options),
     loadSubCategories(options).catch(() => ({ subCategories: [] })),
+    readRange('Transactions!A:M').catch(() => []),
   ]);
 
+  // Aggregate current month spent per category
+  const today = new Date();
+  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  
+  const actuals = {};
+  if (Array.isArray(transactions) && transactions.length > 1) {
+    const txRows = transactions.slice(1);
+    for (const row of txRows) {
+      const month = String(row[2] ?? '').trim();
+      if (month === currentMonth) {
+        const amount = parseFloat(row[3]) || 0;
+        const catId = String(row[4] ?? '').trim();
+        if (catId) {
+          actuals[catId] = (actuals[catId] || 0) + amount;
+        }
+      }
+    }
+  }
+
+  // Merge actual spent into categories
+  const enrichedCategories = categories.map(cat => {
+    const spent = actuals[cat.category_id] || 0;
+    const remaining = Math.max((cat.monthlyBudget || 0) - spent, 0);
+    const utilization = cat.monthlyBudget > 0 ? spent / cat.monthlyBudget : 0;
+    return {
+      ...cat,
+      spent,
+      remaining,
+      utilization
+    };
+  });
+
   return {
-    categories,
+    categories: enrichedCategories,
     subCategories,
     source,
-    summary: summarizeCategories(categories),
+    summary: summarizeCategories(enrichedCategories),
+    transactions,
   };
 }
 

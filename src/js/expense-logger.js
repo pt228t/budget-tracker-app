@@ -12,7 +12,7 @@
  */
 
 import { getAccessToken } from './auth.js';
-import { appendRow, readRange, updateRow, deleteRow, resolveSheetId } from './sheets-api.js';
+import { appendRow, readRange, updateRow, deleteRow, resolveSheetId, getAuthorizedUsers } from './sheets-api.js';
 import {
   getTransactionsCache,
   setTransactionsCache,
@@ -59,6 +59,33 @@ export async function initExpenseLogger(formId, listId) {
   if (!form || !listEl) return;
 
   _injectMissingFields(form);
+
+  const paidBySelect = form.querySelector('#bp-paid-by');
+  if (paidBySelect) {
+    try {
+      const currentUser = await _getUserEmail().catch(() => 'me');
+      const users = await getAuthorizedUsers().catch(() => []);
+      if (users.length > 0) {
+        paidBySelect.innerHTML = users.map(user => {
+          const isSelf = user.toLowerCase() === currentUser.toLowerCase();
+          const label = isSelf ? `Me (${user})` : user;
+          return `<option value="${user}">${label}</option>`;
+        }).join('');
+        const selfUser = users.find(user => user.toLowerCase() === currentUser.toLowerCase());
+        if (selfUser) {
+          paidBySelect.value = selfUser;
+        }
+      } else {
+        paidBySelect.innerHTML = `
+          <option value="${currentUser}">${currentUser}</option>
+          <option value="partner">Partner</option>
+        `;
+      }
+    } catch (e) {
+      console.warn('[ExpenseLogger] Failed to populate paid-by list dynamically', e);
+    }
+  }
+
   _wireVendorSuggestion(form);
   _wireSubmit(form, listEl);
   _wireListActions(listEl);
@@ -176,7 +203,12 @@ async function _handleSubmit(form, listEl) {
   _clearErrors(errorEl);
 
   const loggedBy = await _getUserEmail();
-  const paidBy   = rawData.paidByRaw === 'me' ? loggedBy : 'partner';
+  let paidBy = rawData.paidByRaw;
+  if (paidBy === 'me') {
+    paidBy = loggedBy;
+  } else if (paidBy === 'partner') {
+    paidBy = 'partner';
+  }
 
   const row = buildTransactionRow({
     amount:        parseFloat(rawData.amount),

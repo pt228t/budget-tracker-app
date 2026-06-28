@@ -147,3 +147,28 @@ Harden OAuth flow, implement admin user management, support manual budget catego
 - [sheets-api.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/sheets-api.js) — Added `readRangeFromSpreadsheet()` for external workbook access.
 - [app.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/app.js) — Wired `initSettingsPanel()` initialization during route updates.
 - Tests: Created [settings-sync.test.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/tests/unit/settings-sync.test.js) covering client-side sync logic with complete Vitest mocks.
+
+---
+
+# Sprint 11: Personal Payment Tracking & Reimbursement
+
+## Goal
+Implement personal payment tracking (B-025) and month-end personal payment summary & settlement split calculations (B-026) in the UI.
+
+## Tasks Completed
+- **B-025: Personal payment tracking (overflow)**
+  - Dynamically populated the "Paid by" dropdown in the expense form with the authorized users' emails.
+  - Updated mapping in `_handleSubmit` to correctly save the selected user's email into the `paid_by` column.
+- **B-026: Month-end personal payment summary & settlement**
+  - Added a Personal Settlement dashboard card showing total out-of-pocket spending per user, net balances, dynamic reimbursement settlement instructions (who owes whom how much), and recent out-of-pocket logs.
+  - Implemented dynamic aggregation of current month spending from the `Transactions` sheet to enrich category spent metrics on the main dashboard cards and list.
+  - Created `tests/unit/personal-settlement.test.js` covering balance computations and advice output.
+
+## Completed Code & Files
+- [dashboard.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/dashboard.js) — Added `renderPersonalSettlement()` balance/debt resolution algorithm and DOM layout rendering.
+- [expense-logger.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/expense-logger.js) — Populated `bp-paid-by` dynamically from `getAuthorizedUsers()`; updated form submission mapping.
+- [categories.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/categories.js) — Updated `loadCategoryBundle()` to fetch current month transactions and dynamically aggregate spent amounts.
+- [index.html](file:///Users/prashant228/Documents/Projects/budget-tracker-app/index.html) — Added Personal Settlement card container.
+- [app.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/app.js) — Wired `renderPersonalSettlement()` calls during category data hydration.
+- Tests: Created [personal-settlement.test.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/tests/unit/personal-settlement.test.js) test file.
+

@@ -51,8 +51,8 @@
 | B-022 | Apps Script: 80% budget threshold alert | Notifications | M4 | S7 | `DONE` |
 | B-023 | Apps Script: Monthly report (1st of month) | Notifications | M4 | S7 | `DONE` |
 | B-024 | Apps Script: 48-hour no-log reminder | Notifications | M4 | S8 | `DONE` |
-| B-025 | Frontend: Personal payment tracking (overflow) | Tracking | M4 | S8 | `TODO` |
-| B-026 | Frontend: Month-end personal payment summary | Tracking | M4 | S8 | `TODO` |
+| B-025 | Frontend: Personal payment tracking (overflow) | Tracking | M4 | S8 | `DONE` |
+| B-026 | Frontend: Month-end personal payment summary | Tracking | M4 | S8 | `DONE` |
 
 ### 🟢 P2 — Nice to Have
 
