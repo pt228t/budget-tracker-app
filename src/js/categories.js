@@ -1,4 +1,4 @@
-import { readRange } from './sheets-api.js';
+import { readRange, readRangeFromSpreadsheet, appendRow, updateCell } from './sheets-api.js';
 import {
   getCategoriesCache,
   setCategoriesCache,
@@ -241,4 +241,151 @@ export async function loadCategoryBundle(options = {}) {
     source,
     summary: summarizeCategories(categories),
   };
+}
+
+/**
+ * Sync categories client-side from the source joint-spend spreadsheet.
+ * Parses App_Config, reads Recurring_Items, and synchronizes Budget_Categories.
+ *
+ * @returns {Promise<{ added: number, updated: number, archived: number, unchanged: number }>}
+ */
+export async function syncCategoriesFromSource() {
+  const configRows = await readRange('App_Config!A:B');
+  const config = {};
+  for (const row of configRows) {
+    const key = String(row[0] ?? '').trim();
+    const val = String(row[1] ?? '').trim();
+    if (key) config[key] = val;
+  }
+
+  const sourceId = config['source_spreadsheet_id'];
+  const sourceTab = config['source_recurring_items_tab'] || 'Recurring_Items';
+
+  if (!sourceId) {
+    throw new Error('source_spreadsheet_id not set in App_Config. Please set it first.');
+  }
+
+  // Read source items
+  const sourceRows = await readRangeFromSpreadsheet(sourceId, `${sourceTab}!A:F`);
+  if (!sourceRows || sourceRows.length <= 1) {
+    return { added: 0, updated: 0, archived: 0, unchanged: 0, info: 'No items in source recurring list' };
+  }
+
+  const sourceItems = [];
+  const [sourceHeaderRow, ...sourceDataRows] = sourceRows;
+  
+  // Columns: Col A (0) = item, Col C (2) = monthly_amount, Col F (5) = active_status
+  for (const row of sourceDataRows) {
+    const name = String(row[0] ?? '').trim();
+    const amount = parseFloat(row[2]) || 0;
+    const activeStatus = String(row[5] ?? '').trim();
+    if (name && amount > 0 && activeStatus === 'Active') {
+      sourceItems.push({ name, amount });
+    }
+  }
+
+  // Read local categories raw rows
+  const localRows = await readRange('Budget_Categories!A:H');
+  const headers = (localRows[0] || []).map(normalizeHeader);
+  
+  // Find local category index map (by source_item_name)
+  const existingMap = {};
+  const dataRows = localRows.slice(1);
+  dataRows.forEach((row, i) => {
+    const record = headers.reduce((acc, h, idx) => {
+      acc[h] = row[idx] ?? '';
+      return acc;
+    }, {});
+    const sourceItemName = record.source_item_name || record.category_name;
+    if (sourceItemName) {
+      existingMap[sourceItemName] = {
+        rowIdx: i + 2, // 1-based index (header is 1, first data row is 2)
+        record,
+        rawRow: row
+      };
+    }
+  });
+
+  const today = new Date();
+  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  const timestamp = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}:${String(today.getSeconds()).padStart(2, '0')}`;
+
+  let added = 0;
+  let updated = 0;
+  let unchanged = 0;
+  let archived = 0;
+
+  const seenSourceNames = {};
+
+  for (const item of sourceItems) {
+    seenSourceNames[item.name] = true;
+
+    if (existingMap.hasOwnProperty(item.name)) {
+      const { rowIdx, record } = existingMap[item.name];
+      const existingBudget = parseFloat(record.monthly_budget) || 0;
+      const existingStatus = record.active_status;
+      const categoryId = record.category_id;
+
+      let changed = false;
+
+      if (existingBudget !== item.amount) {
+        await updateCell(`Budget_Categories!C${rowIdx}`, item.amount);
+        changed = true;
+      }
+
+      if (existingStatus !== 'Active') {
+        await updateCell(`Budget_Categories!F${rowIdx}`, 'Active');
+        changed = true;
+      }
+
+      if (changed) {
+        // Upsert budget history
+        await appendRow('Budget_History!A:E', [
+          currentMonth,
+          categoryId,
+          item.amount,
+          'synced',
+          timestamp
+        ]);
+        updated++;
+      } else {
+        unchanged++;
+      }
+    } else {
+      // New category
+      const categoryId = 'cat_' + Math.random().toString(36).substring(2, 8) + Date.now().toString(36).substring(4, 8);
+      const newRow = [
+        categoryId,
+        item.name,
+        item.amount,
+        'synced',
+        item.name,
+        'Active',
+        currentMonth,
+        ''
+      ];
+      await appendRow('Budget_Categories!A:H', newRow);
+      await appendRow('Budget_History!A:E', [
+        currentMonth,
+        categoryId,
+        item.amount,
+        'synced',
+        timestamp
+      ]);
+      added++;
+    }
+  }
+
+  // Archive categories no longer in source
+  for (const name in existingMap) {
+    if (existingMap.hasOwnProperty(name) && !seenSourceNames[name]) {
+      const { rowIdx, record } = existingMap[name];
+      if (record.source === 'synced' && record.active_status !== 'Archived') {
+        await updateCell(`Budget_Categories!F${rowIdx}`, 'Archived');
+        archived++;
+      }
+    }
+  }
+
+  return { added, updated, archived, unchanged };
 }

@@ -175,6 +175,19 @@ export async function readRange(range) {
 }
 
 /**
+ * Reads a range from a specific spreadsheet ID.
+ *
+ * @param {string} spreadsheetId
+ * @param {string} range
+ * @returns {Promise<Array[]>}
+ */
+export async function readRangeFromSpreadsheet(spreadsheetId, range) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`;
+  const data = await _request(url, { method: 'GET' });
+  return data?.values ?? [];
+}
+
+/**
  * Reads multiple ranges in a single request (reduces quota usage).
  * Returns an array of 2D value arrays, one per range, in the same order.
  *

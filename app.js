@@ -17,7 +17,7 @@ import {
 import { renderDashboardHealth } from './src/js/dashboard.js';
 import { initExpenseLogger } from './src/js/expense-logger.js';
 import { initAnalytics } from './src/js/analytics.js';
-import { initAdminPanel } from './src/js/admin.js';
+import { initAdminPanel, initSettingsPanel } from './src/js/admin.js';
 import { reRequestConsent } from './src/js/auth.js';
 import { onScopeInsufficient, ScopeError } from './src/js/sheets-api.js';
 
@@ -76,6 +76,7 @@ function updateRoute(route) {
 
   if (route === 'settings' && _authedEmail) {
     initAdminPanel('admin-panel', _authedEmail);
+    initSettingsPanel('settings-config-panel');
   }
 }
 
