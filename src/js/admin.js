@@ -31,6 +31,7 @@ export function renderAdminPanel(users, currentUserEmail) {
         />
         <button data-admin-submit type="submit" class="btn btn-primary">Add</button>
       </form>
+      <p data-admin-error class="admin-error" style="display:none"></p>
     </div>
   `;
 }
@@ -58,11 +59,16 @@ export async function initAdminPanel(containerId, currentUserEmail) {
           return;
         }
         input.setCustomValidity('');
+        const errEl = container.querySelector('[data-admin-error]');
+        if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
         form.querySelector('[data-admin-submit]').disabled = true;
         try {
           await addAuthorizedUser(email);
           input.value = '';
           await refresh();
+        } catch (err) {
+          console.error('[Admin] addAuthorizedUser failed:', err);
+          if (errEl) { errEl.textContent = `Failed to add user: ${err.message}`; errEl.style.display = ''; }
         } finally {
           const submit = form.querySelector('[data-admin-submit]');
           if (submit) submit.disabled = false;
