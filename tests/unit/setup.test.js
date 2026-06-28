@@ -234,6 +234,7 @@ describe('bootstrapSpreadsheet — ensureUserAuthorized (B-038)', () => {
 
     const { readRange, updateCell } = await import('../../src/js/sheets-api.js');
     readRange.mockResolvedValueOnce([
+      ['key', 'value'],
       ['source_spreadsheet_id', ''],
       ['allowed_users', ''],
       ['currency', 'INR'],
@@ -251,6 +252,7 @@ describe('bootstrapSpreadsheet — ensureUserAuthorized (B-038)', () => {
 
     const { readRange, updateCell } = await import('../../src/js/sheets-api.js');
     readRange.mockResolvedValueOnce([
+      ['key', 'value'],
       ['allowed_users', 'admin@example.com'],
     ]);
     updateCell.mockClear();
@@ -268,6 +270,7 @@ describe('bootstrapSpreadsheet — ensureUserAuthorized (B-038)', () => {
 
     const { readRange, updateCell } = await import('../../src/js/sheets-api.js');
     readRange.mockResolvedValueOnce([
+      ['key', 'value'],
       ['allowed_users', 'existing@example.com'],
     ]);
     updateCell.mockClear();

@@ -345,7 +345,7 @@ async function ensureUserAuthorized(userEmail) {
         .filter(Boolean);
       if (current.map(e => e.toLowerCase()).includes(userEmail.toLowerCase().trim())) return;
       const updated = [...current, userEmail.trim()].join(', ');
-      await updateCell(`App_Config!B${i + 2}`, updated);
+      await updateCell(`App_Config!B${i + 1}`, updated);
       return;
     }
   }

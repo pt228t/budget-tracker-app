@@ -279,22 +279,22 @@ describe('getAuthorizedUsers', () => {
   });
 
   it('returns array of emails from allowed_users row', async () => {
-    global.fetch = mockFetchOk({ values: [['allowed_users', 'a@x.com, b@x.com']] });
+    global.fetch = mockFetchOk({ values: [['key', 'value'], ['allowed_users', 'a@x.com, b@x.com']] });
     expect(await getAuthorizedUsers()).toEqual(['a@x.com', 'b@x.com']);
   });
 
   it('returns empty array when allowed_users value is empty string', async () => {
-    global.fetch = mockFetchOk({ values: [['allowed_users', '']] });
+    global.fetch = mockFetchOk({ values: [['key', 'value'], ['allowed_users', '']] });
     expect(await getAuthorizedUsers()).toEqual([]);
   });
 
   it('returns empty array when allowed_users row not found', async () => {
-    global.fetch = mockFetchOk({ values: [['currency', 'INR']] });
+    global.fetch = mockFetchOk({ values: [['key', 'value'], ['currency', 'INR']] });
     expect(await getAuthorizedUsers()).toEqual([]);
   });
 
   it('trims whitespace from each email', async () => {
-    global.fetch = mockFetchOk({ values: [['allowed_users', '  a@x.com ,  b@x.com  ']] });
+    global.fetch = mockFetchOk({ values: [['key', 'value'], ['allowed_users', '  a@x.com ,  b@x.com  ']] });
     expect(await getAuthorizedUsers()).toEqual(['a@x.com', 'b@x.com']);
   });
 });
@@ -310,7 +310,7 @@ describe('addAuthorizedUser', () => {
   it('appends email to existing list and calls updateCell', async () => {
     global.fetch = vi
       .fn()
-      .mockResolvedValueOnce(mockFetchOk({ values: [['allowed_users', 'admin@x.com']] })())
+      .mockResolvedValueOnce(mockFetchOk({ values: [['key', 'value'], ['allowed_users', 'admin@x.com']] })())
       .mockResolvedValueOnce(mockFetchOk({})());
 
     await addAuthorizedUser('new@x.com');
@@ -324,7 +324,7 @@ describe('addAuthorizedUser', () => {
   it('does not call updateCell when email already in list (case-insensitive)', async () => {
     global.fetch = vi
       .fn()
-      .mockResolvedValueOnce(mockFetchOk({ values: [['allowed_users', 'Admin@X.com']] })());
+      .mockResolvedValueOnce(mockFetchOk({ values: [['key', 'value'], ['allowed_users', 'Admin@X.com']] })());
 
     await addAuthorizedUser('admin@x.com');
 
@@ -334,7 +334,7 @@ describe('addAuthorizedUser', () => {
   it('sets email as sole value when allowed_users was empty', async () => {
     global.fetch = vi
       .fn()
-      .mockResolvedValueOnce(mockFetchOk({ values: [['allowed_users', '']] })())
+      .mockResolvedValueOnce(mockFetchOk({ values: [['key', 'value'], ['allowed_users', '']] })())
       .mockResolvedValueOnce(mockFetchOk({})());
 
     await addAuthorizedUser('first@x.com');
@@ -356,7 +356,7 @@ describe('removeAuthorizedUser', () => {
   it('removes email from list and calls updateCell', async () => {
     global.fetch = vi
       .fn()
-      .mockResolvedValueOnce(mockFetchOk({ values: [['allowed_users', 'a@x.com, b@x.com']] })())
+      .mockResolvedValueOnce(mockFetchOk({ values: [['key', 'value'], ['allowed_users', 'a@x.com, b@x.com']] })())
       .mockResolvedValueOnce(mockFetchOk({})());
 
     await removeAuthorizedUser('a@x.com');
@@ -369,7 +369,7 @@ describe('removeAuthorizedUser', () => {
   it('is case-insensitive when matching email to remove', async () => {
     global.fetch = vi
       .fn()
-      .mockResolvedValueOnce(mockFetchOk({ values: [['allowed_users', 'Admin@X.com, other@x.com']] })())
+      .mockResolvedValueOnce(mockFetchOk({ values: [['key', 'value'], ['allowed_users', 'Admin@X.com, other@x.com']] })())
       .mockResolvedValueOnce(mockFetchOk({})());
 
     await removeAuthorizedUser('admin@x.com');

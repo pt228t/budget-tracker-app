@@ -317,7 +317,7 @@ export async function addAuthorizedUser(email) {
       const norm = email.trim().toLowerCase();
       if (current.map(e => e.toLowerCase()).includes(norm)) return;
       const updated = [...current, email.trim()].join(', ');
-      await updateCell(`App_Config!B${i + 2}`, updated);
+      await updateCell(`App_Config!B${i + 1}`, updated);
       return;
     }
   }
@@ -333,7 +333,7 @@ export async function removeAuthorizedUser(email) {
         .map(e => e.trim())
         .filter(Boolean);
       const updated = current.filter(e => e.toLowerCase() !== norm).join(', ');
-      await updateCell(`App_Config!B${i + 2}`, updated);
+      await updateCell(`App_Config!B${i + 1}`, updated);
       return;
     }
   }
