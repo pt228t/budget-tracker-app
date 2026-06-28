@@ -24,7 +24,7 @@ function sendWeeklySummary() {
     }
 
     var data = _gatherMonthData(ss);
-    var subject = 'BudgetPulse Weekly Summary — ' + data.month;
+    var subject = 'BudgetPulse Weekly Summary - ' + data.month;
     var html = _buildWeeklySummaryHtml(data);
 
     var todayKey = toDateString(new Date());
@@ -61,7 +61,7 @@ function sendMonthlyReport() {
     var prevMonth = toYearMonth(prevMonthDate);
 
     var data = _gatherMonthData(ss, prevMonthDate);
-    var subject = 'BudgetPulse Monthly Report — ' + prevMonth;
+    var subject = 'BudgetPulse Monthly Report - ' + prevMonth;
     var html = _buildMonthlyReportHtml(data);
 
     for (var i = 0; i < recipients.length; i++) {
@@ -102,7 +102,7 @@ function checkNoLogReminder() {
           continue;
         }
         var html = _buildNoLogReminderHtml(recipients[i], lastLogged);
-        GmailApp.sendEmail(recipients[i], 'BudgetPulse — Time to log your expenses!', '', { htmlBody: html });
+        GmailApp.sendEmail(recipients[i], 'BudgetPulse - Time to log your expenses!', '', { htmlBody: html });
         _logNotification(ss, NOTIFICATION_TYPE.NO_LOG_REMINDER, recipients[i], currentMonth, '', 'No-log reminder sent');
         logInfo('No-log reminder sent to ' + recipients[i]);
       }
@@ -365,8 +365,8 @@ function _buildWeeklySummaryHtml(data) {
     '</tr>';
   }).join('');
 
-  return _htmlWrap('BudgetPulse — Weekly Summary ' + data.month,
-    '<h2 style="color:#1e293b;margin:0 0 16px;">📊 Weekly Summary — ' + _esc(data.month) + '</h2>' +
+  return _htmlWrap('BudgetPulse - Weekly Summary ' + data.month,
+    '<h2 style="color:#1e293b;margin:0 0 16px;">Weekly Summary - ' + _esc(data.month) + '</h2>' +
 
     '<table style="border-collapse:collapse;background:#f8fafc;border-radius:8px;width:100%;margin-bottom:24px;">' +
       '<tr>' +
@@ -415,11 +415,11 @@ function _buildMonthlyReportHtml(data) {
   var base = _buildWeeklySummaryHtml(data);
   // Replace the title
   return base.replace(
-    'Weekly Summary — ' + data.month,
-    'Monthly Report — ' + data.month
+    'Weekly Summary - ' + data.month,
+    'Monthly Report - ' + data.month
   ).replace(
-    '📊 Weekly Summary',
-    '📅 Monthly Report'
+    'Weekly Summary',
+    'Monthly Report'
   );
 }
 
@@ -435,11 +435,11 @@ function _buildNoLogReminderHtml(email, lastLogged) {
     ? 'Your last expense was logged on <strong>' + toDateString(lastLogged) + '</strong>.'
     : "You haven't logged any expenses yet this month.";
 
-  return _htmlWrap('BudgetPulse — Don\'t forget to log!',
-    '<h2 style="color:#1e293b;margin:0 0 12px;">⏰ Expense Logging Reminder</h2>' +
+  return _htmlWrap('BudgetPulse - Don\'t forget to log!',
+    '<h2 style="color:#1e293b;margin:0 0 12px;">Expense Logging Reminder</h2>' +
     '<p style="color:#374151;font-size:15px;">' + lastLoggedText + '</p>' +
     '<p style="color:#374151;font-size:15px;">It takes less than 10 seconds. Keep your budget picture accurate!</p>' +
-    '<a href="https://prashant228.github.io/budget-tracker-app" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#3b82f6;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Open BudgetPulse →</a>'
+    '<a href="https://prashant228.github.io/budget-tracker-app" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#3b82f6;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Open BudgetPulse &rarr;</a>'
   );
 }
 
@@ -450,7 +450,7 @@ function _htmlWrap(title, body) {
     '<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;">' +
     '<div style="max-width:640px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">' +
       '<div style="background:#1e293b;padding:24px 32px;">' +
-        '<span style="color:#fff;font-size:20px;font-weight:700;">💰 BudgetPulse</span>' +
+        '<span style="color:#fff;font-size:20px;font-weight:700;">BudgetPulse</span>' +
       '</div>' +
       '<div style="padding:32px;">' + body + '</div>' +
       '<div style="background:#f8fafc;padding:16px 32px;text-align:center;font-size:12px;color:#94a3b8;">' +
