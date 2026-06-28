@@ -291,6 +291,54 @@ export async function isUserAllowed(userEmail) {
   return false;
 }
 
+// ─── Authorized-User Management ──────────────────────────────────────────────
+
+export async function getAuthorizedUsers() {
+  const rows = await readRange('App_Config!A:B');
+  for (const row of rows) {
+    if (String(row[0]).trim() === 'allowed_users') {
+      return String(row[1] ?? '')
+        .split(',')
+        .map(e => e.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+}
+
+export async function addAuthorizedUser(email) {
+  const rows = await readRange('App_Config!A:B');
+  for (let i = 0; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === 'allowed_users') {
+      const current = String(rows[i][1] ?? '')
+        .split(',')
+        .map(e => e.trim())
+        .filter(Boolean);
+      const norm = email.trim().toLowerCase();
+      if (current.map(e => e.toLowerCase()).includes(norm)) return;
+      const updated = [...current, email.trim()].join(', ');
+      await updateCell(`App_Config!B${i + 2}`, updated);
+      return;
+    }
+  }
+}
+
+export async function removeAuthorizedUser(email) {
+  const rows = await readRange('App_Config!A:B');
+  for (let i = 0; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === 'allowed_users') {
+      const norm = email.trim().toLowerCase();
+      const current = String(rows[i][1] ?? '')
+        .split(',')
+        .map(e => e.trim())
+        .filter(Boolean);
+      const updated = current.filter(e => e.toLowerCase() !== norm).join(', ');
+      await updateCell(`App_Config!B${i + 2}`, updated);
+      return;
+    }
+  }
+}
+
 // ─── Utility ──────────────────────────────────────────────────────────────────
 
 function _sleep(ms) {

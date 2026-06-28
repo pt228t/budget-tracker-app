@@ -15,7 +15,7 @@
  */
 
 import { getAccessToken } from './auth.js';
-import { getSpreadsheetId, setSpreadsheetId, appendRow } from './sheets-api.js';
+import { getSpreadsheetId, setSpreadsheetId, appendRow, readRange, updateCell } from './sheets-api.js';
 
 // ─── Schema Definition ───────────────────────────────────────────────────────
 
@@ -117,6 +117,7 @@ export async function bootstrapSpreadsheet(userEmail = '') {
 
     if (missingTabs.length === 0) {
       console.log('[Setup] All required tabs already exist. Spreadsheet is ready.');
+      await ensureUserAuthorized(userEmail);
       report.ready = true;
       return report;
     }
@@ -330,3 +331,22 @@ export async function isSpreadsheetReady() {
 }
 
 export { REQUIRED_TABS, SCHEMA };
+
+// ─── Auth Helpers ─────────────────────────────────────────────────────────────
+
+async function ensureUserAuthorized(userEmail) {
+  if (!userEmail) return;
+  const rows = await readRange('App_Config!A:B');
+  for (let i = 0; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === 'allowed_users') {
+      const current = String(rows[i][1] ?? '')
+        .split(',')
+        .map(e => e.trim())
+        .filter(Boolean);
+      if (current.map(e => e.toLowerCase()).includes(userEmail.toLowerCase().trim())) return;
+      const updated = [...current, userEmail.trim()].join(', ');
+      await updateCell(`App_Config!B${i + 2}`, updated);
+      return;
+    }
+  }
+}

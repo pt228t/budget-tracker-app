@@ -17,6 +17,9 @@ import {
 import { renderDashboardHealth } from './src/js/dashboard.js';
 import { initExpenseLogger } from './src/js/expense-logger.js';
 import { initAnalytics } from './src/js/analytics.js';
+import { initAdminPanel } from './src/js/admin.js';
+
+let _authedEmail = '';
 
 const ROUTES = ['login', 'dashboard', 'expense-log', 'analytics', 'settings'];
 
@@ -68,6 +71,10 @@ function updateRoute(route) {
   }
 
   document.title = `BudgetPulse | ${ROUTE_TITLES[route]}`;
+
+  if (route === 'settings' && _authedEmail) {
+    initAdminPanel('admin-panel', _authedEmail);
+  }
 }
 
 function updateAuthControls() {
@@ -307,6 +314,7 @@ async function handleAuthSuccess(accessToken) {
       return;
     }
 
+    _authedEmail = profile.email;
     setRoute('dashboard');
     hydrateCategoryData({ force: true });
     setSyncMessage('Ready');

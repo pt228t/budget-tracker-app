@@ -11,7 +11,8 @@ vi.mock('../../src/js/sheets-api.js', () => ({
   getSpreadsheetId: vi.fn(() => 'MOCK_SPREADSHEET_ID'),
   setSpreadsheetId: vi.fn(),
   readRange: vi.fn(),
-  appendRow: vi.fn().mockResolvedValue({})
+  appendRow: vi.fn().mockResolvedValue({}),
+  updateCell: vi.fn().mockResolvedValue({})
 }));
 
 describe('Setup / Bootstrap Module', () => {
@@ -212,5 +213,80 @@ describe('bootstrapSpreadsheet — Drive-based sheet discovery (BUG-006)', () =>
     await bootstrapSpreadsheet();
 
     expect(setSpreadsheetId).toHaveBeenCalledWith('FALLBACK_SHEET_ID');
+  });
+});
+
+describe('bootstrapSpreadsheet — ensureUserAuthorized (B-038)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    global.fetch = vi.fn();
+  });
+
+  function allTabsMetadata() {
+    return {
+      ok: true,
+      json: async () => ({ sheets: REQUIRED_TABS.map(t => ({ properties: { title: t } })) })
+    };
+  }
+
+  it('adds userEmail to allowed_users when all tabs exist and field is empty', async () => {
+    global.fetch.mockResolvedValueOnce(allTabsMetadata());
+
+    const { readRange, updateCell } = await import('../../src/js/sheets-api.js');
+    readRange.mockResolvedValueOnce([
+      ['source_spreadsheet_id', ''],
+      ['allowed_users', ''],
+      ['currency', 'INR'],
+    ]);
+    updateCell.mockClear();
+
+    const report = await bootstrapSpreadsheet('first@example.com');
+
+    expect(report.ready).toBe(true);
+    expect(updateCell).toHaveBeenCalledWith('App_Config!B3', 'first@example.com');
+  });
+
+  it('appends userEmail when other users already in allowed_users', async () => {
+    global.fetch.mockResolvedValueOnce(allTabsMetadata());
+
+    const { readRange, updateCell } = await import('../../src/js/sheets-api.js');
+    readRange.mockResolvedValueOnce([
+      ['allowed_users', 'admin@example.com'],
+    ]);
+    updateCell.mockClear();
+
+    await bootstrapSpreadsheet('newuser@example.com');
+
+    expect(updateCell).toHaveBeenCalledWith(
+      'App_Config!B2',
+      'admin@example.com, newuser@example.com'
+    );
+  });
+
+  it('skips updateCell when userEmail already in allowed_users', async () => {
+    global.fetch.mockResolvedValueOnce(allTabsMetadata());
+
+    const { readRange, updateCell } = await import('../../src/js/sheets-api.js');
+    readRange.mockResolvedValueOnce([
+      ['allowed_users', 'existing@example.com'],
+    ]);
+    updateCell.mockClear();
+
+    await bootstrapSpreadsheet('existing@example.com');
+
+    expect(updateCell).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when userEmail is empty string', async () => {
+    global.fetch.mockResolvedValueOnce(allTabsMetadata());
+
+    const { readRange, updateCell } = await import('../../src/js/sheets-api.js');
+    readRange.mockClear();
+    updateCell.mockClear();
+
+    await bootstrapSpreadsheet('');
+
+    expect(readRange).not.toHaveBeenCalled();
+    expect(updateCell).not.toHaveBeenCalled();
   });
 });

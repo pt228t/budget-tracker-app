@@ -23,6 +23,9 @@ import {
   updateRow,
   updateCell,
   isUserAllowed,
+  getAuthorizedUsers,
+  addAuthorizedUser,
+  removeAuthorizedUser,
   onTokenExpired,
   SheetsApiError,
   OfflineError,
@@ -264,5 +267,115 @@ describe('isUserAllowed', () => {
   it('returns false when allowed_users row missing', async () => {
     global.fetch = mockFetchOk({ values: [['currency', 'INR']] });
     expect(await isUserAllowed('anyone@test.com')).toBe(false);
+  });
+});
+
+// ─── getAuthorizedUsers ───────────────────────────────────────────────────────
+
+describe('getAuthorizedUsers', () => {
+  beforeEach(() => {
+    vi.stubGlobal('navigator', { onLine: true });
+    getAccessToken.mockReturnValue('fake-token');
+  });
+
+  it('returns array of emails from allowed_users row', async () => {
+    global.fetch = mockFetchOk({ values: [['allowed_users', 'a@x.com, b@x.com']] });
+    expect(await getAuthorizedUsers()).toEqual(['a@x.com', 'b@x.com']);
+  });
+
+  it('returns empty array when allowed_users value is empty string', async () => {
+    global.fetch = mockFetchOk({ values: [['allowed_users', '']] });
+    expect(await getAuthorizedUsers()).toEqual([]);
+  });
+
+  it('returns empty array when allowed_users row not found', async () => {
+    global.fetch = mockFetchOk({ values: [['currency', 'INR']] });
+    expect(await getAuthorizedUsers()).toEqual([]);
+  });
+
+  it('trims whitespace from each email', async () => {
+    global.fetch = mockFetchOk({ values: [['allowed_users', '  a@x.com ,  b@x.com  ']] });
+    expect(await getAuthorizedUsers()).toEqual(['a@x.com', 'b@x.com']);
+  });
+});
+
+// ─── addAuthorizedUser ────────────────────────────────────────────────────────
+
+describe('addAuthorizedUser', () => {
+  beforeEach(() => {
+    vi.stubGlobal('navigator', { onLine: true });
+    getAccessToken.mockReturnValue('fake-token');
+  });
+
+  it('appends email to existing list and calls updateCell', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(mockFetchOk({ values: [['allowed_users', 'admin@x.com']] })())
+      .mockResolvedValueOnce(mockFetchOk({})());
+
+    await addAuthorizedUser('new@x.com');
+
+    const patchCall = global.fetch.mock.calls[1];
+    expect(patchCall[0]).toContain('App_Config!B2');
+    const body = JSON.parse(patchCall[1].body);
+    expect(body.values[0][0]).toBe('admin@x.com, new@x.com');
+  });
+
+  it('does not call updateCell when email already in list (case-insensitive)', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(mockFetchOk({ values: [['allowed_users', 'Admin@X.com']] })());
+
+    await addAuthorizedUser('admin@x.com');
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('sets email as sole value when allowed_users was empty', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(mockFetchOk({ values: [['allowed_users', '']] })())
+      .mockResolvedValueOnce(mockFetchOk({})());
+
+    await addAuthorizedUser('first@x.com');
+
+    const patchCall = global.fetch.mock.calls[1];
+    const body = JSON.parse(patchCall[1].body);
+    expect(body.values[0][0]).toBe('first@x.com');
+  });
+});
+
+// ─── removeAuthorizedUser ─────────────────────────────────────────────────────
+
+describe('removeAuthorizedUser', () => {
+  beforeEach(() => {
+    vi.stubGlobal('navigator', { onLine: true });
+    getAccessToken.mockReturnValue('fake-token');
+  });
+
+  it('removes email from list and calls updateCell', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(mockFetchOk({ values: [['allowed_users', 'a@x.com, b@x.com']] })())
+      .mockResolvedValueOnce(mockFetchOk({})());
+
+    await removeAuthorizedUser('a@x.com');
+
+    const patchCall = global.fetch.mock.calls[1];
+    const body = JSON.parse(patchCall[1].body);
+    expect(body.values[0][0]).toBe('b@x.com');
+  });
+
+  it('is case-insensitive when matching email to remove', async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(mockFetchOk({ values: [['allowed_users', 'Admin@X.com, other@x.com']] })())
+      .mockResolvedValueOnce(mockFetchOk({})());
+
+    await removeAuthorizedUser('admin@x.com');
+
+    const patchCall = global.fetch.mock.calls[1];
+    const body = JSON.parse(patchCall[1].body);
+    expect(body.values[0][0]).toBe('other@x.com');
   });
 });
