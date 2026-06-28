@@ -14,6 +14,16 @@ test('switches between the scaffold pages', async ({ page }) => {
     });
   });
 
+  await page.route('https://www.googleapis.com/oauth2/v3/tokeninfo**', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly'
+      })
+    });
+  });
+
   await page.route('https://sheets.googleapis.com/v4/spreadsheets/**', async route => {
     const url = route.request().url();
     if (url.includes('values/App_Config')) {

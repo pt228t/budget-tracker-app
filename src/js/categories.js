@@ -154,7 +154,7 @@ export function buildCategoryHealthModels(categories = []) {
     .sort((left, right) => right.utilizationPercent - left.utilizationPercent);
 }
 
-export function renderCategoryHealthMarkup(categories = [], limit = 5) {
+export function renderCategoryHealthMarkup(categories = [], limit = 100) {
   const models = buildCategoryHealthModels(categories).slice(0, limit);
 
   if (models.length === 0) {

@@ -26,6 +26,16 @@ test.describe('Auth Flow', () => {
       });
     });
 
+    await page.route('https://www.googleapis.com/oauth2/v3/tokeninfo**', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly'
+        })
+      });
+    });
+
     // Mock the Google Sheets API to pretend the user is authorized
     await page.route('https://sheets.googleapis.com/v4/spreadsheets/**', async route => {
       if (route.request().url().includes('values')) {
