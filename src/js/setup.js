@@ -117,7 +117,11 @@ export async function bootstrapSpreadsheet(userEmail = '') {
 
     if (missingTabs.length === 0) {
       console.log('[Setup] All required tabs already exist. Spreadsheet is ready.');
-      await ensureUserAuthorized(userEmail);
+      try {
+        await ensureUserAuthorized(userEmail);
+      } catch (err) {
+        console.warn('[Setup] ensureUserAuthorized failed (non-fatal):', err);
+      }
       report.ready = true;
       return report;
     }
@@ -336,6 +340,7 @@ export { REQUIRED_TABS, SCHEMA };
 
 async function ensureUserAuthorized(userEmail) {
   if (!userEmail) return;
+  console.log('[Setup] ensureUserAuthorized: checking', userEmail);
   const rows = await readRange('App_Config!A:B');
   for (let i = 0; i < rows.length; i++) {
     if (String(rows[i][0]).trim() === 'allowed_users') {
@@ -343,10 +348,16 @@ async function ensureUserAuthorized(userEmail) {
         .split(',')
         .map(e => e.trim())
         .filter(Boolean);
-      if (current.map(e => e.toLowerCase()).includes(userEmail.toLowerCase().trim())) return;
+      if (current.map(e => e.toLowerCase()).includes(userEmail.toLowerCase().trim())) {
+        console.log('[Setup] ensureUserAuthorized: already in list, skipping');
+        return;
+      }
       const updated = [...current, userEmail.trim()].join(', ');
+      console.log(`[Setup] ensureUserAuthorized: writing to App_Config!B${i + 1} →`, updated);
       await updateCell(`App_Config!B${i + 1}`, updated);
+      console.log('[Setup] ensureUserAuthorized: done');
       return;
     }
   }
+  console.warn('[Setup] ensureUserAuthorized: allowed_users row not found in App_Config');
 }

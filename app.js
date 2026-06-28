@@ -321,6 +321,7 @@ async function handleAuthSuccess(accessToken) {
   } catch (err) {
     console.error(err);
     setSyncMessage('Setup failed: ' + err.message);
+    alert(`Setup failed: ${err.message}\n\nOpen browser console (F12) for details.`);
     signOut();
   }
 }
