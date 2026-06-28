@@ -1,6 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { initAuth, signIn, signOut, getAccessToken, isUserAuthenticated } from '../../src/js/auth.js';
 
+const VALID_TOKENINFO = {
+  ok: true,
+  json: async () => ({
+    scope: [
+      'https://www.googleapis.com/auth/spreadsheets',
+      'https://www.googleapis.com/auth/drive.readonly',
+      'email',
+      'profile',
+    ].join(' '),
+    expires_in: '3599',
+  }),
+};
+
 describe('Auth Module', () => {
   beforeEach(() => {
     // Mock DOM elements
@@ -36,15 +49,14 @@ describe('Auth Module', () => {
     expect(getAccessToken()).toBeNull();
   });
 
-  it('should auto-authenticate if token exists in sessionStorage', () => {
+  it('should auto-authenticate if token exists in sessionStorage', async () => {
     sessionStorage.setItem('bp_access_token', 'fake_token_123');
-    
-    // Create a mock callback
+    global.fetch = vi.fn().mockResolvedValue(VALID_TOKENINFO);
+
     const onSuccess = vi.fn();
-    
     initAuth(onSuccess);
-    
-    expect(isUserAuthenticated()).toBe(true);
+
+    await vi.waitFor(() => expect(isUserAuthenticated()).toBe(true));
     expect(getAccessToken()).toBe('fake_token_123');
     expect(onSuccess).toHaveBeenCalledWith('fake_token_123');
   });
@@ -58,14 +70,15 @@ describe('Auth Module', () => {
     expect(mockClient.requestAccessToken).toHaveBeenCalledWith({ prompt: 'consent' });
   });
 
-  it('should clear session and state on signOut', () => {
+  it('should clear session and state on signOut', async () => {
     sessionStorage.setItem('bp_access_token', 'fake_token_123');
-    initAuth(); // Will auto-auth
-    
-    expect(isUserAuthenticated()).toBe(true);
-    
+    global.fetch = vi.fn().mockResolvedValue(VALID_TOKENINFO);
+    initAuth();
+
+    await vi.waitFor(() => expect(isUserAuthenticated()).toBe(true));
+
     signOut();
-    
+
     expect(isUserAuthenticated()).toBe(false);
     expect(getAccessToken()).toBeNull();
     expect(sessionStorage.getItem('bp_access_token')).toBeNull();

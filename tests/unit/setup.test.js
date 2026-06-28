@@ -12,7 +12,10 @@ vi.mock('../../src/js/sheets-api.js', () => ({
   setSpreadsheetId: vi.fn(),
   readRange: vi.fn(),
   appendRow: vi.fn().mockResolvedValue({}),
-  updateCell: vi.fn().mockResolvedValue({})
+  updateCell: vi.fn().mockResolvedValue({}),
+  ScopeError: class ScopeError extends Error {
+    constructor() { super('OAuth token has insufficient scopes'); this.name = 'ScopeError'; }
+  }
 }));
 
 describe('Setup / Bootstrap Module', () => {
@@ -200,8 +203,8 @@ describe('bootstrapSpreadsheet — Drive-based sheet discovery (BUG-006)', () =>
     getSpreadsheetId.mockReturnValueOnce(null);
 
     global.fetch
-      // Drive search: API error
-      .mockResolvedValueOnce({ ok: false, status: 403 })
+      // Drive search: API error (not a scope error, just a permission issue on the file)
+      .mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ error: { status: 'PERMISSION_DENIED' } }) })
       // Sheets create
       .mockResolvedValueOnce({ ok: true, json: async () => ({ spreadsheetId: 'FALLBACK_SHEET_ID' }) })
       // metadata (all tabs exist)

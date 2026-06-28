@@ -41,13 +41,40 @@ function setupClient() {
     callback: handleTokenResponse,
   });
 
-  // Check for existing token in session
   const storedToken = sessionStorage.getItem('bp_access_token');
   if (storedToken) {
-    accessToken = storedToken;
+    validateAndUseToken(storedToken);
+  }
+}
+
+const REQUIRED_SCOPES = [
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/drive.readonly',
+];
+
+async function validateAndUseToken(token) {
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${encodeURIComponent(token)}`
+    );
+    if (!res.ok) {
+      console.warn('[Auth] Cached token invalid — cleared');
+      sessionStorage.removeItem('bp_access_token');
+      return;
+    }
+    const info = await res.json();
+    const granted = (info.scope || '').split(' ');
+    if (!REQUIRED_SCOPES.every(s => granted.includes(s))) {
+      console.warn('[Auth] Cached token missing required scopes — cleared, re-consent needed');
+      sessionStorage.removeItem('bp_access_token');
+      return;
+    }
+    accessToken = token;
     isAuthenticated = true;
     updateAuthUI();
-    if (authSuccessCallback) authSuccessCallback(accessToken);
+    if (authSuccessCallback) authSuccessCallback(token);
+  } catch {
+    sessionStorage.removeItem('bp_access_token');
   }
 }
 
@@ -71,15 +98,25 @@ function handleTokenResponse(tokenResponse) {
   if (authSuccessCallback) authSuccessCallback(accessToken);
 }
 
-/**
- * Trigger the Google OAuth consent popup
- */
 export function signIn() {
   if (!tokenClient) {
     console.warn('Google Identity Services not initialized yet.');
     return;
   }
   tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+let _reConsentInFlight = false;
+
+export function reRequestConsent() {
+  if (_reConsentInFlight) return;
+  _reConsentInFlight = true;
+  sessionStorage.removeItem('bp_access_token');
+  accessToken = null;
+  isAuthenticated = false;
+  updateAuthUI();
+  if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' });
+  setTimeout(() => { _reConsentInFlight = false; }, 5000);
 }
 
 /**

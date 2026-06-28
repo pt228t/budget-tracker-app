@@ -18,6 +18,8 @@ import { renderDashboardHealth } from './src/js/dashboard.js';
 import { initExpenseLogger } from './src/js/expense-logger.js';
 import { initAnalytics } from './src/js/analytics.js';
 import { initAdminPanel } from './src/js/admin.js';
+import { reRequestConsent } from './src/js/auth.js';
+import { onScopeInsufficient, ScopeError } from './src/js/sheets-api.js';
 
 let _authedEmail = '';
 
@@ -320,6 +322,11 @@ async function handleAuthSuccess(accessToken) {
     setSyncMessage('Ready');
   } catch (err) {
     console.error(err);
+    if (err instanceof ScopeError) {
+      setSyncMessage('Re-authorizing — please approve all requested permissions.');
+      reRequestConsent();
+      return;
+    }
     setSyncMessage('Setup failed: ' + err.message);
     alert(`Setup failed: ${err.message}\n\nOpen browser console (F12) for details.`);
     signOut();
@@ -339,6 +346,11 @@ function initializeIntegrations() {
     updateAuthControls();
     setSyncMessage('Session expired. Sign in again.');
     setRoute('login');
+  });
+
+  onScopeInsufficient(() => {
+    setSyncMessage('Re-authorizing — please approve all requested permissions.');
+    reRequestConsent();
   });
 
   if (!isUserAuthenticated()) {

@@ -57,18 +57,24 @@ export class AuthError extends Error {
   }
 }
 
-// ─── Re-auth Hook ─────────────────────────────────────────────────────────────
+export class ScopeError extends Error {
+  constructor() {
+    super('OAuth token has insufficient scopes — re-consent required');
+    this.name = 'ScopeError';
+  }
+}
+
+// ─── Re-auth Hooks ────────────────────────────────────────────────────────────
 
 let _onTokenExpired = null;
+let _onScopeInsufficient = null;
 
-/**
- * Register a callback to fire when a 401 is received.
- * The app should call signIn() inside this callback.
- *
- * @param {() => void} cb
- */
 export function onTokenExpired(cb) {
   _onTokenExpired = cb;
+}
+
+export function onScopeInsufficient(cb) {
+  _onScopeInsufficient = cb;
 }
 
 // ─── Core Fetch ──────────────────────────────────────────────────────────────
@@ -115,6 +121,17 @@ async function _request(url, options = {}) {
         throw new SheetsApiError('Rate limit exceeded after retries', 429);
       }
 
+      if (response.status === 403) {
+        const body = await response.json().catch(() => ({}));
+        const reason = body?.error?.details?.[0]?.reason;
+        if (reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT') {
+          if (_onScopeInsufficient) _onScopeInsufficient();
+          throw new ScopeError();
+        }
+        const msg = body?.error?.message || 'HTTP 403 Forbidden';
+        throw new SheetsApiError(msg, 403);
+      }
+
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
         const msg = body?.error?.message || `HTTP ${response.status}`;
@@ -127,8 +144,8 @@ async function _request(url, options = {}) {
       return await response.json();
 
     } catch (e) {
-      // Don't retry AuthError, OfflineError, or SheetsApiError (except 429 handled above)
-      if (e instanceof AuthError || e instanceof OfflineError || e instanceof SheetsApiError) {
+      // Don't retry AuthError, OfflineError, ScopeError, or SheetsApiError
+      if (e instanceof AuthError || e instanceof OfflineError || e instanceof ScopeError || e instanceof SheetsApiError) {
         throw e;
       }
       // Network failure — retry

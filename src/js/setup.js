@@ -15,7 +15,7 @@
  */
 
 import { getAccessToken } from './auth.js';
-import { getSpreadsheetId, setSpreadsheetId, appendRow, readRange, updateCell } from './sheets-api.js';
+import { getSpreadsheetId, setSpreadsheetId, appendRow, readRange, updateCell, ScopeError } from './sheets-api.js';
 
 // ─── Schema Definition ───────────────────────────────────────────────────────
 
@@ -120,6 +120,7 @@ export async function bootstrapSpreadsheet(userEmail = '') {
       try {
         await ensureUserAuthorized(userEmail);
       } catch (err) {
+        if (err instanceof ScopeError) throw err;
         console.warn('[Setup] ensureUserAuthorized failed (non-fatal):', err);
       }
       report.ready = true;
@@ -159,6 +160,7 @@ export async function bootstrapSpreadsheet(userEmail = '') {
     return report;
 
   } catch (err) {
+    if (err instanceof ScopeError) throw err;
     console.error('[Setup] Bootstrap failed:', err);
     report.errors.push(err.message);
     return report;
@@ -167,11 +169,14 @@ export async function bootstrapSpreadsheet(userEmail = '') {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/**
- * Search Google Drive for an existing BudgetPulse spreadsheet owned by the user.
- * Returns the spreadsheet ID of the oldest match, or null if none found.
- * Prevents duplicate sheet creation when localStorage is cleared.
- */
+async function throwIfScopeError(response) {
+  if (response.status === 403) {
+    const body = await response.json().catch(() => ({}));
+    const reason = body?.error?.details?.[0]?.reason;
+    if (reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT') throw new ScopeError();
+  }
+}
+
 async function findExistingWorkbook() {
   const token = getAccessToken();
   const q = encodeURIComponent(
@@ -184,6 +189,7 @@ async function findExistingWorkbook() {
   });
 
   if (!response.ok) {
+    await throwIfScopeError(response);
     console.warn(`[Setup] Drive search failed (${response.status}) — will create new sheet`);
     return null;
   }
@@ -192,9 +198,6 @@ async function findExistingWorkbook() {
   return data.files && data.files.length > 0 ? data.files[0].id : null;
 }
 
-/**
- * Create a brand new Google Sheet workbook.
- */
 async function createNewWorkbook() {
   const token = getAccessToken();
   const url = `https://sheets.googleapis.com/v4/spreadsheets`;
@@ -211,6 +214,7 @@ async function createNewWorkbook() {
   });
 
   if (!response.ok) {
+    await throwIfScopeError(response);
     throw new Error(`Failed to create workbook: ${response.status}`);
   }
 
@@ -218,9 +222,6 @@ async function createNewWorkbook() {
   return data.spreadsheetId;
 }
 
-/**
- * Get list of existing tab names from the spreadsheet metadata.
- */
 async function getExistingTabs(spreadsheetId) {
   const token = getAccessToken();
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties.title`;
@@ -230,6 +231,7 @@ async function getExistingTabs(spreadsheetId) {
   });
 
   if (!response.ok) {
+    await throwIfScopeError(response);
     throw new Error(`Failed to fetch spreadsheet metadata: ${response.status}`);
   }
 
@@ -237,9 +239,6 @@ async function getExistingTabs(spreadsheetId) {
   return (data.sheets || []).map(s => s.properties.title);
 }
 
-/**
- * Create multiple tabs in a single batchUpdate call.
- */
 async function createTabs(spreadsheetId, tabNames) {
   const token = getAccessToken();
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
@@ -260,6 +259,7 @@ async function createTabs(spreadsheetId, tabNames) {
   });
 
   if (!response.ok) {
+    await throwIfScopeError(response);
     const errorBody = await response.text();
     throw new Error(`Failed to create tabs: ${response.status} — ${errorBody}`);
   }
@@ -267,9 +267,6 @@ async function createTabs(spreadsheetId, tabNames) {
   return response.json();
 }
 
-/**
- * Write header row to a tab.
- */
 async function writeHeaders(tabName, headers) {
   const spreadsheetId = getSpreadsheetId();
   const token = getAccessToken();
@@ -290,6 +287,7 @@ async function writeHeaders(tabName, headers) {
   });
 
   if (!response.ok) {
+    await throwIfScopeError(response);
     throw new Error(`Failed to write headers to ${tabName}: ${response.status}`);
   }
 }
