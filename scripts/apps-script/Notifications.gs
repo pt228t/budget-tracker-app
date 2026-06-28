@@ -27,13 +27,14 @@ function sendWeeklySummary() {
     var subject = 'BudgetPulse Weekly Summary — ' + data.month;
     var html = _buildWeeklySummaryHtml(data);
 
+    var todayKey = toDateString(new Date());
     for (var i = 0; i < recipients.length; i++) {
-      if (_notificationAlreadySent(ss, NOTIFICATION_TYPE.WEEKLY_SUMMARY, recipients[i], data.month)) {
-        logInfo('Weekly summary already sent to ' + recipients[i] + ' for ' + data.month + '. Skip.');
+      if (_notificationAlreadySent(ss, NOTIFICATION_TYPE.WEEKLY_SUMMARY, recipients[i], todayKey)) {
+        logInfo('Weekly summary already sent to ' + recipients[i] + ' on ' + todayKey + '. Skip.');
         continue;
       }
       GmailApp.sendEmail(recipients[i], subject, '', { htmlBody: html });
-      _logNotification(ss, NOTIFICATION_TYPE.WEEKLY_SUMMARY, recipients[i], data.month, '', 'Weekly summary sent');
+      _logNotification(ss, NOTIFICATION_TYPE.WEEKLY_SUMMARY, recipients[i], todayKey, '', 'Weekly summary sent');
       logInfo('Weekly summary sent to ' + recipients[i]);
     }
   } catch (e) {
