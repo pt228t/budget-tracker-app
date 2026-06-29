@@ -24,6 +24,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
   </head>
   <body>
+    <canvas id="snow-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1;"></canvas>
     <header class="shell-topbar">
       <div class="container shell-topbar-inner">
         <div>
@@ -162,7 +163,6 @@
           <article class="card section-panel section-panel-wide">
             <div class="panel-header">
               <h2>Quick Expense Log</h2>
-              <span class="status-pill">B-007 ready next</span>
             </div>
             <form id="expense-log-form" class="form-shell-grid">
               <div class="form-group">

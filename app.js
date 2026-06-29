@@ -427,8 +427,73 @@ function initializeIntegrations() {
   }
 }
 
+function initWinterTheme() {
+  const canvas = document.getElementById('snow-canvas');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
+
+  class Snowflake {
+    constructor() {
+      this.reset();
+    }
+    reset() {
+      this.x = Math.random() * width;
+      this.y = Math.random() * -height;
+      this.size = Math.random() * 3 + 1;
+      this.speed = Math.random() * 1.2 + 0.4;
+      this.opacity = Math.random() * 0.6 + 0.2;
+      this.swing = Math.random() * 1.5;
+      this.swingSpeed = Math.random() * 0.015 + 0.005;
+      this.swingOffset = Math.random() * Math.PI * 2;
+    }
+    update() {
+      this.y += this.speed;
+      this.swingOffset += this.swingSpeed;
+      this.x += Math.sin(this.swingOffset) * this.swing;
+
+      if (this.y > height || this.x < -10 || this.x > width + 10) {
+        this.reset();
+        this.y = -10;
+      }
+    }
+    draw(theme) {
+      const color = theme === 'dark' 
+        ? `rgba(255, 255, 255, ${this.opacity})` 
+        : `rgba(99, 102, 241, ${this.opacity * 0.45})`;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  const count = Math.min(120, Math.floor((width * height) / 10000));
+  const snowflakes = Array.from({ length: count }, () => new Snowflake());
+
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    for (const flake of snowflakes) {
+      flake.update();
+      flake.draw(theme);
+    }
+    requestAnimationFrame(animate);
+  }
+
+  window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  });
+
+  animate();
+}
+
 function initializeApp() {
   initThemeToggle();
+  initWinterTheme();
   wireNavigation();
   hydrateShell();
   initializeChartPreview();
