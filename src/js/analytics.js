@@ -37,6 +37,8 @@ export async function initAnalytics(containerId) {
         const expensesByCategory = calculateExpensesByCategory(txRows);
         const budgetVsActual = calculateBudgetVsActual(txRows, catRows);
         const topExpenses = getTopExpenses(txRows);
+        const dayOfWeekData = calculateDayOfWeekData(txRows);
+        const personSplitData = calculatePersonSplitData(txRows);
 
         // Map category IDs to names for the top expenses display
         const catMap = {};
@@ -52,11 +54,21 @@ export async function initAnalytics(containerId) {
 
         container.innerHTML = `
             <div class="analytics-charts" style="display: flex; gap: 20px; margin-bottom: 30px; justify-content: center; flex-wrap: wrap;">
-                <div style="width: 400px;">
+                <div style="width: 400px; max-width: 100%;">
                     <canvas id="categoryDonutChart"></canvas>
                 </div>
-                <div style="width: 500px;">
+                <div style="width: 500px; max-width: 100%;">
                     <canvas id="budgetBarChart"></canvas>
+                </div>
+            </div>
+            <div class="analytics-charts-row2" style="display: flex; gap: 20px; margin-bottom: 30px; justify-content: center; flex-wrap: wrap; align-items: stretch; width: 100%;">
+                <div style="width: 400px; max-width: 100%;">
+                    <canvas id="personSplitChart"></canvas>
+                </div>
+                <div class="heatmap-card card" style="width: 500px; max-width: 100%; display: flex; flex-direction: column; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md, 8px); background: var(--color-bg-surface); box-sizing: border-box;">
+                    <h3 style="text-align: center; margin-top: 0; margin-bottom: 16px; font-size: 1rem; color: var(--color-text-primary); font-weight: 600;">Day-of-Week Spending Heatmap</h3>
+                    <div id="dayOfWeekHeatmap" class="heatmap-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; flex-grow: 1; align-items: stretch;">
+                    </div>
                 </div>
             </div>
             <div class="analytics-table">
@@ -77,6 +89,33 @@ export async function initAnalytics(containerId) {
 
         renderCategoryDonutChart('categoryDonutChart', expensesByCategory);
         renderBudgetBarChart('budgetBarChart', budgetVsActual);
+        renderPersonSplitChart('personSplitChart', personSplitData);
+        
+        // Populate day-of-week heatmap
+        const heatmapEl = document.getElementById('dayOfWeekHeatmap');
+        if (heatmapEl) {
+            const { days, maxAmount } = dayOfWeekData;
+            heatmapEl.innerHTML = days.map(d => {
+                const percent = maxAmount > 0 ? d.amount / maxAmount : 0;
+                const mixPercent = Math.round(percent * 85); // Cap at 85%
+                const bgStyle = `color-mix(in srgb, var(--color-brand-primary) ${mixPercent}%, var(--color-bg-surface))`;
+                const borderStyle = mixPercent > 0 ? `1px solid var(--color-brand-primary)` : `1px solid var(--color-border)`;
+                const formattedAmount = new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: 'INR',
+                    maximumFractionDigits: 0
+                }).format(d.amount);
+
+                return `
+                    <div class="heatmap-day" style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 8px 4px; border-radius: var(--radius-md, 8px); background: ${bgStyle}; border: ${borderStyle}; text-align: center; min-height: 80px; transition: transform 0.2s; box-sizing: border-box;">
+                        <span style="font-weight: 600; font-size: 0.75rem; color: var(--color-text-secondary);">${d.name}</span>
+                        <span style="font-size: 0.875rem; font-weight: 700; color: var(--color-text-primary); margin: 4px 0;">${formattedAmount}</span>
+                        <span style="font-size: 0.65rem; color: var(--color-text-tertiary);">${d.count} tx</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
         renderTopExpensesTable('topExpensesTable', topExpensesWithNames);
         renderMoMChart('analytics-chart', momData);
     } catch (err) {
@@ -126,6 +165,95 @@ export function getTopExpenses(txRows) {
         }))
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 5);
+}
+
+export function calculateDayOfWeekData(txRows) {
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const days = dayNames.map(name => ({ name, amount: 0, count: 0 }));
+
+    for (const row of txRows) {
+        const dateStr = row[1];
+        if (!dateStr) continue;
+        
+        // Parse date reliably
+        const parts = dateStr.split('-');
+        if (parts.length < 3) continue;
+        const dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        
+        let dayIdx = dateObj.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+        // Map 0 (Sun) to index 6, and 1-6 to index 0-5
+        const targetIdx = dayIdx === 0 ? 6 : dayIdx - 1;
+        
+        const amount = parseFloat(row[3]) || 0;
+        days[targetIdx].amount += amount;
+        days[targetIdx].count += 1;
+    }
+
+    const maxAmount = Math.max(...days.map(d => d.amount), 0);
+    return { days, maxAmount };
+}
+
+export function calculatePersonSplitData(txRows) {
+    const split = {};
+    for (const row of txRows) {
+        const email = String(row[7] ?? '').trim();
+        const amount = parseFloat(row[3]) || 0;
+        if (!email) continue;
+        
+        // Clean/capitalize email prefix
+        const namePart = email.split('@')[0];
+        const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        
+        split[displayName] = (split[displayName] || 0) + amount;
+    }
+    return split;
+}
+
+export function renderPersonSplitChart(canvasId, personSplitData) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    const labels = Object.keys(personSplitData);
+    const data = Object.values(personSplitData);
+
+    if (window.Chart) {
+        new window.Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{
+                    data,
+                    backgroundColor: [
+                        '#60a5fa', '#34d399', '#fbbf24', '#f472b6'
+                    ],
+                    borderColor: 'var(--color-bg-surface)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Spending Split by Person',
+                        color: 'var(--color-text-primary)',
+                        font: {
+                            weight: 'bold',
+                            size: 14
+                        }
+                    },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: 'var(--color-text-secondary)'
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        console.warn('Chart.js is not loaded. Person Split Chart not rendered.');
+    }
 }
 
 export function renderCategoryDonutChart(canvasId, expensesByCategory) {

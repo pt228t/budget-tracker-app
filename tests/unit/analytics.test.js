@@ -6,6 +6,8 @@ import {
   filterByMonth,
   renderTopExpensesTable,
   calculateMoMData,
+  calculateDayOfWeekData,
+  calculatePersonSplitData,
 } from '../../src/js/analytics.js';
 
 describe('Analytics Data Transformation', () => {
@@ -160,5 +162,53 @@ describe('calculateMoMData', () => {
     // Spent = 350 + 50 = 400.
     expect(result.budgetData[1]).toBe(1300);
     expect(result.actualData[1]).toBe(400);
+  });
+});
+
+describe('calculateDayOfWeekData', () => {
+  it('correctly groups transactions by day of week and finds maxAmount', () => {
+    const txRows = [
+      // transaction_id, date, month, amount, category_id, sub_cat, desc, paid_by
+      ['tx1', '2026-06-29', '2026-06', '100.50', 'cat1', '', 'Mon transaction', 'a@x.com'], // Monday
+      ['tx2', '2026-06-30', '2026-06', '200.00', 'cat2', '', 'Tue transaction', 'b@x.com'], // Tuesday
+      ['tx3', '2026-07-05', '2026-07', '150.00', 'cat1', '', 'Sun transaction', 'a@x.com'], // Sunday
+      ['tx4', '2026-06-29', '2026-06', '50.00',  'cat1', '', 'Another Mon',       'a@x.com'], // Monday
+    ];
+
+    const result = calculateDayOfWeekData(txRows);
+    
+    // Days are ordered: Mon, Tue, Wed, Thu, Fri, Sat, Sun
+    expect(result.days[0].name).toBe('Mon');
+    expect(result.days[0].amount).toBe(150.50);
+    expect(result.days[0].count).toBe(2);
+
+    expect(result.days[1].name).toBe('Tue');
+    expect(result.days[1].amount).toBe(200.00);
+    expect(result.days[1].count).toBe(1);
+
+    expect(result.days[6].name).toBe('Sun');
+    expect(result.days[6].amount).toBe(150.00);
+    expect(result.days[6].count).toBe(1);
+
+    // Other days should be zero
+    expect(result.days[2].amount).toBe(0);
+    
+    // Max amount should be Tuesday's 200
+    expect(result.maxAmount).toBe(200.00);
+  });
+});
+
+describe('calculatePersonSplitData', () => {
+  it('aggregates total spend per user and cleans/capitalizes labels', () => {
+    const txRows = [
+      ['tx1', '2026-06-29', '2026-06', '120.00', 'cat1', '', '', 'prashant@example.com'],
+      ['tx2', '2026-06-30', '2026-06', '80.00',  'cat2', '', '', 'toshi@example.com'],
+      ['tx3', '2026-06-30', '2026-06', '50.00',  'cat1', '', '', 'Prashant@example.com'], // test case insensitivity/casing handling
+    ];
+
+    const result = calculatePersonSplitData(txRows);
+
+    expect(result['Prashant']).toBe(170.00);
+    expect(result['Toshi']).toBe(80.00);
   });
 });

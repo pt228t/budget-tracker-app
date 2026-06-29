@@ -58,8 +58,8 @@
 
 | ID | Story | Epic | Milestone | Sprint | Status |
 |----|-------|------|-----------|--------|--------|
-| B-027 | Frontend: Day-of-week spending heatmap | Analytics | M5 | S15 | `TODO` |
-| B-028 | Frontend: Person-wise spending split chart | Analytics | M5 | S15 | `TODO` |
+| B-027 | Frontend: Day-of-week spending heatmap | Analytics | M5 | S15 | `DONE` |
+| B-028 | Frontend: Person-wise spending split chart | Analytics | M5 | S15 | `DONE` |
 | B-029 | Apps Script: Recurring payment reminder (3 days before) | Notifications | M5 | S9 | `TODO` |
 | B-030 | Frontend: Advanced filters (by person, category, date range) | Analytics | M5 | S9 | `DONE` |
 | B-031 | Frontend: Manual sync trigger button | Sync | M5 | S10 | `DONE` |

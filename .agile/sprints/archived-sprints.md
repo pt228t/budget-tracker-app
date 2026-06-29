@@ -233,6 +233,26 @@ Implement a premium Dark Mode toggle (B-034) with localStorage persistence, syst
 - [index.html](file:///Users/prashant228/Documents/Projects/budget-tracker-app/index.html) — Added theme toggle button with sun/moon SVG icons in the header.
 - [app.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/app.js) — Added `initThemeToggle()`, `_applyTheme()`, `_getPreferredTheme()`, and wired into `initializeApp()`.
 
+---
+
+# Sprint 15: Advanced Analytics (Heatmap & Spend Split)
+
+## Goal
+Implement advanced analytics including a Day-of-Week spending heatmap (B-027) and a Person-wise spending split chart (B-028) in the Analytics view to provide deeper spending insights.
+
+## Tasks Completed
+- **B-027: Day-of-week spending heatmap**
+  - Aggregated transaction amounts and counts per day of the week (Monday - Sunday) inside `calculateDayOfWeekData()`.
+  - Rendered a dynamic HTML color-coded intensity grid in `initAnalytics()` using `color-mix` to blend `--color-brand-primary` with `--color-bg-surface` according to spending weight.
+- **B-028: Person-wise spending split chart**
+  - Aggregated transaction totals grouped by `paid_by` (email) in `calculatePersonSplitData()`.
+  - Added canvas `#personSplitChart` to the layout and rendered a doughnut chart using Chart.js to compare out-of-pocket spending splits between users.
+  - Added unit tests in `analytics.test.js` validating all new transformations.
+
+## Completed Code & Files
+- [analytics.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/analytics.js) — Added calculation and render functions, updated UI layout.
+- [analytics.test.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/tests/unit/analytics.test.js) — Added unit test coverage for new data transformers.
+
 
 
 
