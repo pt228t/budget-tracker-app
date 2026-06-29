@@ -654,6 +654,11 @@ async function _handleDelete(txnId, itemEl) {
     await deleteRow('Transactions', sheetId, rowNum);
 
     rollbackTransaction(month, txnId);
+    // Keep the local filter array in sync — otherwise the next _applyFilters
+    // re-render restores the deleted row into the list.
+    _allLoadedTransactions = _allLoadedTransactions.filter(
+      r => String(r[TC.ID]) !== String(txnId)
+    );
     itemEl.remove();
     _showToast('Expense deleted.');
 
