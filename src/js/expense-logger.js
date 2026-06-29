@@ -94,30 +94,38 @@ export async function initExpenseLogger(formId, listId) {
     }
   }
 
-  _wireVendorSuggestion(form);
-  _wireSubmit(form, listEl);
-  _wireListActions(listEl);
+  // Attach listeners only once — initExpenseLogger may be re-invoked on
+  // re-auth/refresh, and double-wiring the submit handler causes duplicate
+  // appends (one expense logged twice).
+  if (!form.dataset.bpWired) {
+    form.dataset.bpWired = '1';
 
-  // Wire filters change event listeners
-  const filterPaidBy = document.getElementById('bp-filter-paid-by');
-  const filterCat = document.getElementById('bp-filter-category');
-  const filterStart = document.getElementById('bp-filter-start-date');
-  const filterEnd = document.getElementById('bp-filter-end-date');
+    _wireVendorSuggestion(form);
+    _wireSubmit(form, listEl);
+    _wireListActions(listEl);
+    _wireFutureDateNotice(form);
 
-  const onFilterChange = () => _applyFilters(listEl);
-  [filterPaidBy, filterCat, filterStart, filterEnd].forEach(el => {
-    if (el) {
-      el.addEventListener('change', onFilterChange);
-      el.addEventListener('input', onFilterChange);
-    }
-  });
+    // Wire filters change event listeners
+    const filterPaidBy = document.getElementById('bp-filter-paid-by');
+    const filterCat = document.getElementById('bp-filter-category');
+    const filterStart = document.getElementById('bp-filter-start-date');
+    const filterEnd = document.getElementById('bp-filter-end-date');
 
-  // Wire CSV export button
-  const exportBtn = document.getElementById('bp-export-csv');
-  if (exportBtn) {
-    exportBtn.addEventListener('click', () => {
-      _triggerCSVExport(listEl);
+    const onFilterChange = () => _applyFilters(listEl);
+    [filterPaidBy, filterCat, filterStart, filterEnd].forEach(el => {
+      if (el) {
+        el.addEventListener('change', onFilterChange);
+        el.addEventListener('input', onFilterChange);
+      }
     });
+
+    // Wire CSV export button
+    const exportBtn = document.getElementById('bp-export-csv');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        _triggerCSVExport(listEl);
+      });
+    }
   }
 
   await _loadRecentTransactions(listEl);
@@ -156,6 +164,34 @@ function _injectMissingFields(form) {
   `;
   if (submitBtn) form.insertBefore(extra, submitBtn);
   else form.appendChild(extra);
+}
+
+// ─── Future-Date Notice ───────────────────────────────────────────────────────
+
+/**
+ * Warns when the chosen date is in the future. Future-dated expenses are
+ * intentionally excluded from analytics ("spent so far"), so without this
+ * notice the expense silently vanishes from the dashboard until that date.
+ */
+function _wireFutureDateNotice(form) {
+  const dateInput = form.querySelector('#bp-date');
+  if (!dateInput) return;
+
+  const notice = document.createElement('p');
+  notice.id = 'bp-future-notice';
+  notice.className = 'form-hint';
+  notice.setAttribute('role', 'status');
+  notice.style.display = 'none';
+  notice.textContent =
+    'Heads up: this date is in the future. It will be saved, but won’t appear in analytics until that date arrives.';
+  dateInput.insertAdjacentElement('afterend', notice);
+
+  const sync = () => {
+    const isFuture = dateInput.value && dateInput.value > _toDateString(new Date());
+    notice.style.display = isFuture ? '' : 'none';
+  };
+  dateInput.addEventListener('change', sync);
+  dateInput.addEventListener('input', sync);
 }
 
 // ─── Vendor Suggestion ────────────────────────────────────────────────────────
