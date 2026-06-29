@@ -54,8 +54,15 @@ function setRoute(route) {
 }
 
 function updateRoute(route) {
-  if (route !== 'login' && !isUserAuthenticated()) {
+  const authenticated = isUserAuthenticated();
+  updateAuthControls();
+  
+  if (route !== 'login' && !authenticated) {
     setRoute('login');
+    return;
+  }
+  if (route === 'login' && authenticated) {
+    setRoute('dashboard');
     return;
   }
 
@@ -82,12 +89,24 @@ function updateRoute(route) {
 
 function updateAuthControls() {
   const authenticated = isUserAuthenticated();
-  qsa('.shell-nav-link').forEach((link) => {
-    const route = link.dataset.route;
-    if (route && route !== 'login' && route !== 'logout') {
-      link.style.display = authenticated ? '' : 'none';
-    }
-  });
+  
+  // Show navigation bar only when authenticated
+  const nav = qs('.shell-nav');
+  if (nav) {
+    nav.style.display = authenticated ? 'flex' : 'none';
+  }
+  
+  // Show logout button only when authenticated
+  const logoutBtn = document.getElementById('auth-logout-btn');
+  if (logoutBtn) {
+    logoutBtn.style.display = authenticated ? 'inline-flex' : 'none';
+  }
+
+  // Show shell-status bar only when authenticated
+  const shellStatus = qs('.shell-status');
+  if (shellStatus) {
+    shellStatus.style.display = authenticated ? 'flex' : 'none';
+  }
 }
 
 function setSyncMessage(message) {

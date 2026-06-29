@@ -31,13 +31,15 @@
           <h1 class="shell-brand" data-testid="app-title">Google Sheets Budget Tracker</h1>
         </div>
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-          <nav class="shell-nav" aria-label="Primary">
-            <button class="shell-nav-link active" type="button" data-route="login">Login</button>
-            <button class="shell-nav-link" type="button" data-route="dashboard">Dashboard</button>
+          <nav class="shell-nav" aria-label="Primary" style="display: none;">
+            <button class="shell-nav-link active" type="button" data-route="dashboard">Dashboard</button>
             <button class="shell-nav-link" type="button" data-route="expense-log">Expense Log</button>
             <button class="shell-nav-link" type="button" data-route="analytics">Analytics</button>
             <button class="shell-nav-link" type="button" data-route="settings">Settings</button>
           </nav>
+          <button type="button" id="auth-logout-btn" class="btn btn-sm btn-outline shell-nav-link" data-route="logout" style="display: none; padding: 0.625rem 0.95rem; border-radius: var(--radius-full);">
+            Sign Out
+          </button>
           <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
             <!-- Sun icon (shown in dark mode) -->
             <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="display:none;">
@@ -54,50 +56,53 @@
 
     <main class="app-shell">
       <div class="container shell-layout">
-        <section class="shell-status card">
-          <div>
-            <p class="shell-label">Current View</p>
-            <h2 data-current-view data-testid="current-view">Login</h2>
+        <section class="shell-status card" style="display: none; padding: var(--space-4) var(--space-5); border-radius: var(--radius-lg); align-items: center; justify-content: space-between; flex-direction: row; flex-wrap: wrap; gap: 12px; background: var(--color-bg-surface); border: 1px solid var(--color-border);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--color-status-success);" class="status-indicator"></div>
+            <span class="text-secondary" style="font-size: 0.875rem; font-weight: 550;" data-sync-status>Connected to Google Sheets</span>
           </div>
-          <div class="shell-status-meta">
-            <p class="text-secondary">Session Seed</p>
-            <p class="fw-semibold" data-id-seed>bp-session</p>
-            <p class="text-secondary">Today</p>
-            <p class="fw-semibold" data-today>21 Jun 2026</p>
+          <div style="display: flex; align-items: center; gap: 16px; font-size: 0.875rem;">
+            <div>
+              <span class="text-secondary">Today:</span>
+              <span class="fw-semibold" data-today>21 Jun 2026</span>
+            </div>
+            <div>
+              <span class="text-secondary">Active View:</span>
+              <span class="fw-semibold" data-current-view data-testid="current-view">Dashboard</span>
+            </div>
           </div>
         </section>
 
         <section class="page-section" data-page="login" data-testid="login-shell">
-          <div class="shell-hero">
-            <article class="card hero-panel">
-              <div class="sync-status">
-                <span class="status-dot" aria-hidden="true"></span>
-                <span>Awaiting OAuth and Sheets connection</span>
+          <div style="display: flex; justify-content: center; align-items: center; min-height: 60vh; width: 100%;">
+            <article class="card auth-card" style="width: 100%; max-width: 460px; padding: var(--space-6) var(--space-5); text-align: center; display: flex; flex-direction: column; align-items: center; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); background: var(--color-bg-surface); border: 1px solid var(--color-border);">
+              <div style="margin-bottom: 24px;">
+                <div style="width: 64px; height: 64px; border-radius: var(--radius-full); background: color-mix(in srgb, var(--color-brand-primary) 15%, var(--color-bg-surface)); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="var(--color-brand-primary)" style="width: 32px; height: 32px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5h.007m-.007 3h.007m-.007 3h.007m3-6h12a3 3 0 0 1 3 3v1.5m-3-4.5v13.5m0-13.5L8.25 12m10.5 3h.008m-.008 3h.008" />
+                  </svg>
+                </div>
+                <h2 style="font-size: 1.75rem; font-weight: 800; margin: 0 0 8px; color: var(--color-text-primary); letter-spacing: -0.025em;">Welcome to BudgetPulse</h2>
+                <p class="text-secondary" style="font-size: 0.95rem; margin: 0; line-height: 1.5;">
+                  Private, serverless budget tracking. Securely backed by your own Google Drive.
+                </p>
               </div>
-              <h2>Sign in shell for Google OAuth and Sheets access</h2>
-              <p class="text-secondary">
-                This is the entry point for browser auth, API initialization, and
-                session wiring before data hydration.
-              </p>
-              <div class="shell-actions">
-                <button class="btn btn-primary" type="button" data-auth-action="signin">
-                  Sign in with Google
-                </button>
-                <button class="btn btn-outline" type="button" data-go-route="settings">
-                  View Setup Notes
-                </button>
+              
+              <div class="sync-status" style="margin-bottom: 24px; padding: 8px 16px; border-radius: var(--radius-full); font-size: 0.8125rem; font-weight: 550; background: var(--color-bg-surface-hover); border: 1px solid var(--color-border); display: inline-flex; align-items: center; gap: 8px;">
+                <span class="status-dot" aria-hidden="true" style="width: 8px; height: 8px;"></span>
+                <span>Awaiting connection</span>
               </div>
-            </article>
 
-            <aside class="card hero-panel hero-panel-accent">
-              <p class="shell-label">What unlocks next</p>
-              <ul class="checklist" data-testid="checklist">
-                <li class="checklist-item">Google OAuth browser flow</li>
-                <li class="checklist-item">Sheets read and write wrappers</li>
-                <li class="checklist-item">Category hydration from Budget_Categories</li>
-                <li class="checklist-item">Expense logging under ten seconds</li>
-              </ul>
-            </aside>
+              <button class="btn btn-primary btn-lg" type="button" data-auth-action="signin" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 600; padding: 12px 24px; border-radius: var(--radius-full); transition: transform 0.2s, background-color 0.2s;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px;">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                </svg>
+                Sign in with Google
+              </button>
+            </article>
           </div>
         </section>
 
@@ -106,17 +111,17 @@
             <article class="card shell-card" data-testid="overview-card">
               <p class="shell-label">Monthly Budget</p>
               <h3 class="shell-value" data-budget-amount>INR 0</h3>
-              <p class="text-secondary">Backed by Budget_Categories after auth.</p>
+              <p class="text-secondary">Total allocated budget across all categories.</p>
             </article>
             <article class="card shell-card" data-testid="overview-card">
               <p class="shell-label">Spent This Month</p>
               <h3 class="shell-value" data-spent-amount>INR 0</h3>
-              <p class="text-secondary">Will update from Transactions rows.</p>
+              <p class="text-secondary">Total spent by all members this month.</p>
             </article>
             <article class="card shell-card" data-testid="overview-card">
               <p class="shell-label">Category State</p>
               <h3 class="shell-value" data-remaining-amount>INR 0</h3>
-              <p class="text-secondary" data-category-source>Waiting for auth and sheet access.</p>
+              <p class="text-secondary" data-category-source>Remaining balance for this month.</p>
             </article>
           </div>
 
@@ -124,7 +129,6 @@
             <article class="card section-panel">
               <div class="panel-header">
                 <h2>Budget Health</h2>
-                <span class="status-pill">FR-3 shell</span>
               </div>
               <div id="budget-health-panel" class="placeholder-stack">
                 <div class="placeholder-chip">Remaining Budget</div>
@@ -137,7 +141,7 @@
                 <h2>Category Progress</h2>
                 <span class="status-pill status-pill-muted" data-category-count>0 categories</span>
               </div>
-              <p class="text-secondary" data-category-status>Preview health states until live sheet data loads.</p>
+              <p class="text-secondary" data-category-status>Spend breakdown and progress relative to budgets.</p>
               <div class="scroll-container mt-4">
                 <ul class="grid gap-3" data-testid="category-health-list"></ul>
               </div>
@@ -253,18 +257,6 @@
         </section>
 
         <section class="page-section" data-page="settings" hidden>
-          <article class="card section-panel section-panel-wide">
-            <div class="panel-header">
-              <h2>Setup and Integration Notes</h2>
-              <span class="status-pill status-pill-muted">Phase 1 handoff</span>
-            </div>
-            <ul class="notes-list">
-              <li>Static hosting target is GitHub Pages using Vite build output.</li>
-              <li>OAuth will stay in browser session storage.</li>
-              <li>Sheets API wrapper will own reads and appends.</li>
-              <li>Apps Script sync remains separate from the static frontend.</li>
-            </ul>
-          </article>
           <article class="card section-panel section-panel-wide" style="margin-bottom: 24px;">
             <div class="panel-header">
               <h2>Spreadsheet Configuration &amp; Sync</h2>

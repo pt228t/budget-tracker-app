@@ -253,6 +253,28 @@ Implement advanced analytics including a Day-of-Week spending heatmap (B-027) an
 - [analytics.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/analytics.js) — Added calculation and render functions, updated UI layout.
 - [analytics.test.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/tests/unit/analytics.test.js) — Added unit test coverage for new data transformers.
 
+---
+
+# Sprint 16: Premium Visuals & UX Redesign
+
+## Goal
+Implement a premium, state-of-the-art visual design (glassmorphism + mesh radial gradients) and enforce clean navigation gating.
+
+## Tasks Completed
+- **B-040: Frontend: Premium UX overhaul (Glassmorphism & Nav Gating)**
+  - Redesigned the Google Sign-in page with a centered glassmorphism card, glowing sync-status badge, official SVG Google icon inside the sign-in button, and removed Phase 1 checklist boilerplates.
+  - Implemented gated navigation: the main header navigation menu is completely hidden when signed out.
+  - Replaced the odd "Login" nav link with a styled **Sign Out** button in the header topbar next to the theme toggle.
+  - Simplified the status panel to a sleek status bar reporting connection status, current view, and date, hiding it completely when logged out.
+  - Cleaned up boilerplate placeholders in the dashboard overview cards, and removed Phase 1 integration notes cards from Settings.
+  - Modified card styles in `components.css` to introduce subtle interactive lifts (`transform: translateY(-3px)`) and glowing primary borders on hover.
+
+## Completed Code & Files
+- [index.html](file:///Users/prashant228/Documents/Projects/budget-tracker-app/index.html) — Restructured layout and updated login/dashboard sections.
+- [app.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/app.js) — Integrated immediate route redirection and auth gating in `updateRoute`.
+- [app-shell.css](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/css/app-shell.css) — Upgraded app background with radial indigo-violet glow meshes.
+- [components.css](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/css/components.css) — Overhauled `.card` styles for a modern, glassmorphic interactive experience.
+
 
 
 

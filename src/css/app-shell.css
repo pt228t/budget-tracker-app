@@ -1,8 +1,10 @@
 .app-shell {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.14), transparent 28%),
+    radial-gradient(circle at 5% 5%, rgba(99, 102, 241, 0.08), transparent 35%),
+    radial-gradient(circle at 95% 95%, rgba(139, 92, 246, 0.08), transparent 35%),
     linear-gradient(180deg, var(--color-bg-base) 0%, var(--color-bg-surface) 100%);
+  transition: background 0.3s ease;
 }
 
 .shell-topbar {
