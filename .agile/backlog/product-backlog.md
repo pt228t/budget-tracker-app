@@ -67,7 +67,7 @@
 | B-038 | Frontend: Admin console to manage authorized users (UI) | Auth | M5 | S10 | `DONE` |
 | B-039 | Frontend: Detect stale/wrong bound spreadsheet and prompt rebind | Auth/Setup | M5 | S10 | `DONE` |
 | B-033 | Frontend: Export data as CSV | Export | M5 | S10 | `DONE` |
-| B-034 | Frontend: Dark mode toggle | UX | M5 | S10 | `TODO` |
+| B-034 | Frontend: Dark mode toggle | UX | M5 | S10 | `DONE` |
 | B-035 | Foreign currency support (INR primary) | Feature | Future | - | `TODO` |
 | B-036 | CSV bank statement import | Feature | Future | - | `TODO` |
 

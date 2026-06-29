@@ -30,13 +30,25 @@
           <p class="shell-eyebrow">BudgetPulse</p>
           <h1 class="shell-brand" data-testid="app-title">Google Sheets Budget Tracker</h1>
         </div>
-        <nav class="shell-nav" aria-label="Primary">
-          <button class="shell-nav-link active" type="button" data-route="login">Login</button>
-          <button class="shell-nav-link" type="button" data-route="dashboard">Dashboard</button>
-          <button class="shell-nav-link" type="button" data-route="expense-log">Expense Log</button>
-          <button class="shell-nav-link" type="button" data-route="analytics">Analytics</button>
-          <button class="shell-nav-link" type="button" data-route="settings">Settings</button>
-        </nav>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <nav class="shell-nav" aria-label="Primary">
+            <button class="shell-nav-link active" type="button" data-route="login">Login</button>
+            <button class="shell-nav-link" type="button" data-route="dashboard">Dashboard</button>
+            <button class="shell-nav-link" type="button" data-route="expense-log">Expense Log</button>
+            <button class="shell-nav-link" type="button" data-route="analytics">Analytics</button>
+            <button class="shell-nav-link" type="button" data-route="settings">Settings</button>
+          </nav>
+          <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+            <!-- Sun icon (shown in dark mode) -->
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="display:none;">
+              <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+            <!-- Moon icon (shown in light mode) -->
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </header>
 

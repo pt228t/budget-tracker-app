@@ -14,6 +14,43 @@
   backdrop-filter: blur(18px);
 }
 
+/* Dark mode: topbar glass effect */
+[data-theme='dark'] .shell-topbar {
+  background: rgba(15, 23, 42, 0.92);
+}
+
+/* Dark mode: focus ring adjust */
+[data-theme='dark'] .form-control:focus {
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, transform 0.3s;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background-color: var(--color-bg-surface-hover);
+  color: var(--color-text-primary);
+  transform: rotate(15deg);
+}
+
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
 .shell-topbar-inner {
   display: grid;
   gap: var(--space-4);

@@ -296,6 +296,51 @@ function initializeIcons() {
   }
 }
 
+// ─── Theme Switcher ───────────────────────────────────────────────────────────
+
+const THEME_KEY = 'bp_theme';
+
+function _getPreferredTheme() {
+  const stored = localStorage.getItem(THEME_KEY);
+  if (stored === 'dark' || stored === 'light') return stored;
+  // Auto-detect system preference
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function _applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+
+  const sunIcon = document.querySelector('#theme-toggle .icon-sun');
+  const moonIcon = document.querySelector('#theme-toggle .icon-moon');
+  if (sunIcon && moonIcon) {
+    sunIcon.style.display = theme === 'dark' ? '' : 'none';
+    moonIcon.style.display = theme === 'dark' ? 'none' : '';
+  }
+}
+
+function initThemeToggle() {
+  // Apply saved or system-detected theme immediately
+  const initial = _getPreferredTheme();
+  _applyTheme(initial);
+
+  const btn = document.getElementById('theme-toggle');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      localStorage.setItem(THEME_KEY, next);
+      _applyTheme(next);
+    });
+  }
+
+  // Listen for system theme changes (only when user hasn't explicitly set one)
+  window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (!localStorage.getItem(THEME_KEY)) {
+      _applyTheme(e.matches ? 'dark' : 'light');
+    }
+  });
+}
+
 async function handleAuthSuccess(accessToken) {
   updateAuthControls();
   setSyncMessage('Verifying authorization...');
@@ -364,6 +409,7 @@ function initializeIntegrations() {
 }
 
 function initializeApp() {
+  initThemeToggle();
   wireNavigation();
   hydrateShell();
   initializeChartPreview();

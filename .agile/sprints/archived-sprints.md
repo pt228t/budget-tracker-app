@@ -213,5 +213,26 @@ Implement historical log management in the Expense Log view, including advanced 
 - [expense-logger.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/expense-logger.js) — Implemented client-side filters, dynamic option population, add/remove sync triggers, and CSV builder.
 - Tests: Created [log-management.test.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/tests/unit/log-management.test.js).
 
+---
+
+# Sprint 14: Visual Polish (Dark Mode Toggle)
+
+## Goal
+Implement a premium Dark Mode toggle (B-034) with localStorage persistence, system prefers-color-scheme auto-detection, and a fully customized dark theme color palette.
+
+## Tasks Completed
+- **B-034: Dark Mode Toggle**
+  - Added a moon/sun SVG toggle button to the header topbar in `index.html`.
+  - Expanded `[data-theme='dark']` variable block in `variables.css` with brand, semantic, and shadow overrides tuned for dark backgrounds.
+  - Added dark-mode-specific component overrides in `app-shell.css` for the topbar glass effect, form focus rings, and the toggle button styling with a subtle rotation hover animation.
+  - Implemented `initThemeToggle()` in `app.js` with localStorage persistence (`bp_theme` key), system preference auto-detection via `matchMedia('prefers-color-scheme: dark')`, and live system-change listener that defers to user's explicit choice.
+
+## Completed Code & Files
+- [variables.css](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/css/variables.css) — Expanded `[data-theme='dark']` with brand, semantic, and shadow variable overrides.
+- [app-shell.css](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/css/app-shell.css) — Added dark topbar glass, focus ring, and `.theme-toggle` button styles.
+- [index.html](file:///Users/prashant228/Documents/Projects/budget-tracker-app/index.html) — Added theme toggle button with sun/moon SVG icons in the header.
+- [app.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/app.js) — Added `initThemeToggle()`, `_applyTheme()`, `_getPreferredTheme()`, and wired into `initializeApp()`.
+
+
 
 
