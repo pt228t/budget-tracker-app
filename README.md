@@ -1,128 +1,159 @@
 # BudgetPulse
 
-BudgetPulse is a zero-backend budgeting app that stores its data in a Google Sheet.
-The web app runs on GitHub Pages, authenticates with Google OAuth, and reads or writes
-directly to the linked spreadsheet.
+BudgetPulse is a zero-backend budgeting app that stores all data in a Google Sheet.
+The web app runs on GitHub Pages, signs users in with Google OAuth, and then reads
+and writes directly to the linked spreadsheet.
 
-## What this app needs
+## What you need before using the app
 
-- A Google account that can sign in to the app
+- A Google account
 - A Google Sheet that will act as the BudgetPulse workbook
-- Permission to edit that sheet if you want to add or change data
+- Edit access to that sheet if you need to update data
 
-On first sign-in, approve all requested Google permissions.
-BudgetPulse currently asks for:
+When you sign in for the first time, approve all requested Google permissions.
+
+BudgetPulse asks for:
 
 - Google Sheets access
 - Google Drive read access
-- Basic profile
 - Email address
+- Basic profile
 
-These permissions are required so the app can:
+These permissions are needed so the app can:
 
-- locate an existing BudgetPulse workbook
+- find an existing BudgetPulse workbook
 - verify that the required tabs exist
 - create missing tabs when needed
-- keep the allowed user list in sync
+- keep the allowed user list updated
 
-## How BudgetPulse chooses a sheet
+## How the app chooses which sheet to use
 
-When the app starts, it tries to find the workbook in this order:
+On startup, BudgetPulse chooses the spreadsheet in this order:
 
 1. `spreadsheetId` or `sheetId` in the app URL
-2. the build-time value in `VITE_BUDGETPULSE_SHEET_ID`
-3. the last sheet saved in this browser's local storage
+2. `VITE_BUDGETPULSE_SHEET_ID` from the deployed build
+3. the last sheet ID saved in this browser's local storage
 4. a Google Drive search for a spreadsheet named `BudgetPulse`
-5. create a new spreadsheet if nothing valid is found
+5. create a new sheet if nothing valid is found
 
-This matters because different people and different devices do not share browser
-local storage.
+This is important because browser local storage is different on every device and browser.
 
-## Recommended ways to use the app
+## Best ways to use the app
 
-### 1. Single person, one device
+### 1. One person, one device
 
 Use the app normally.
 After the first successful setup, this browser remembers the workbook ID.
 
-### 2. Single person, multiple devices
+### 2. One person, multiple devices
 
-Recommended:
+Recommended setup:
 
-- use the same Google account everywhere
-- deploy with a canonical sheet ID using `VITE_BUDGETPULSE_SHEET_ID`
+1. Use the same Google account everywhere
+2. Deploy the app with one canonical sheet ID
+3. Let every device point to that same sheet
 
-Without a canonical sheet ID, a new browser may fall back to Drive search.
-That can still work, but it is less deterministic.
+Best option:
 
-### 3. Shared by more than one person
+- set `BUDGETPULSE_SHEET_ID` in GitHub Secrets so the deployed app always knows the canonical workbook
 
-Recommended:
+### 3. More than one person sharing the app
 
-1. Pick one canonical Google Sheet
-2. Share that sheet with every user who should use BudgetPulse
-3. Give them edit access if they need to change data
-4. Deploy the app with the canonical sheet ID
+Recommended setup:
 
-For shared usage, do not rely only on local storage.
-Use one of these two approaches:
+1. Pick one Google Sheet as the source of truth
+2. Share that sheet with every user
+3. Give edit access to people who should be able to change data
+4. Set `BUDGETPULSE_SHEET_ID` in GitHub Secrets
+5. Redeploy the app
 
-- Best for production: set `VITE_BUDGETPULSE_SHEET_ID`
-- Good for one-off sharing: send the app URL with `?spreadsheetId=<sheet-id-or-full-sheet-url>`
+This is the safest way to make sure all users, devices, and browsers use the same workbook.
 
-Example:
+## First-time sharing flow for multiple people
+
+If you want more than one person to use BudgetPulse:
+
+1. Open the correct Google Sheet
+2. Copy its spreadsheet ID from the URL
+3. Share the sheet with all intended users
+4. Set GitHub secret `BUDGETPULSE_SHEET_ID` to that spreadsheet ID
+5. Push to `main` so GitHub Pages rebuilds
+6. Ask users to open the app and sign in with Google
+7. Ask users to approve all requested permissions
+
+If this is configured correctly, everyone should land on the same workbook.
+
+## Alternate sharing option: pass the sheet in the URL
+
+You can also send users a link like this:
 
 ```text
 https://your-app-url/?spreadsheetId=1AbCdEfGhIjKlMnOpQrStUvWxYz
 ```
 
-You can also pass the full Google Sheets URL. BudgetPulse normalizes it.
+BudgetPulse also accepts a full Google Sheets URL in that parameter and normalizes it.
 
-## Bootstrap behavior
+Use this when:
 
-Bootstrap happens automatically after sign-in.
+- you want a one-off shared link
+- you want to test a different workbook temporarily
+- you do not want to redeploy immediately
+
+## How bootstrap works
+
+Bootstrap runs automatically after sign-in.
 
 During bootstrap, BudgetPulse:
 
-1. chooses the target spreadsheet
-2. loads the spreadsheet tabs
-3. checks the required tabs
+1. picks the target spreadsheet
+2. loads the existing tabs
+3. checks whether all required tabs exist
 4. creates missing tabs if needed
-5. writes default `App_Config` values if required
-6. adds the signed-in user to `allowed_users` when appropriate
+5. writes default `App_Config` values when required
+6. updates the allowed user list when appropriate
 
-If the target spreadsheet is already correct and complete, bootstrap only verifies it.
+If the sheet is already correct, bootstrap only verifies it and continues.
 
-## If an old sheet exists but a new sheet was created by mistake
+## If a new sheet gets created by mistake
 
-This can happen if:
+This can happen when:
 
-- a user signs in from a fresh browser or device
-- the browser has no saved workbook ID
-- Drive search finds the wrong sheet or finds nothing
+- a user signs in from a new browser
+- local storage is empty
+- the app does not know the canonical sheet ID
+- Drive search finds the wrong file or finds nothing
 
-### Recovery using Settings
+If that happens, do not keep using the wrong sheet.
+Switch back to the original workbook from `Settings`.
 
-BudgetPulse includes a safe repair flow in `Settings`.
+## How to repair the app using Settings
 
-Use this when you know the original workbook ID and want to switch back to it.
+BudgetPulse has a built-in repair flow in `Settings`.
+
+Use this if:
+
+- the app linked to the wrong sheet
+- a duplicate sheet was created
+- you want to switch back to the original workbook
 
 Steps:
 
 1. Open the app
 2. Go to `Settings`
-3. In `Spreadsheet Configuration & Sync`, paste either:
+3. Find `Spreadsheet Configuration & Sync`
+4. Paste either:
    - the original spreadsheet ID
    - or the full Google Sheets URL
-4. Click `Save & Verify`
-5. Wait for the verification message
+5. Click `Save & Verify`
+6. Wait for the result message
 
-What happens internally:
+What `Save & Verify` does:
 
-- BudgetPulse stores the new sheet ID temporarily
-- it runs bootstrap against that sheet
-- if verification succeeds, the new sheet becomes the active workbook
-- if verification fails, the previous sheet ID is restored automatically
+1. stores the new sheet ID temporarily
+2. runs bootstrap on that sheet
+3. verifies that the required tabs exist
+4. keeps the new sheet only if verification succeeds
+5. restores the old sheet ID automatically if verification fails
 
 Success message:
 
@@ -132,58 +163,49 @@ Failure message:
 
 - `Verification failed: ...`
 
-This means the app did not switch permanently and your previous sheet link was restored.
+If verification fails, the previous workbook is restored automatically.
 
-### Recovery checklist
+## How to recover if you know the old sheet ID
 
-If you need to repair a mistaken sheet switch:
+If you already know the original workbook ID:
 
-1. Open the original sheet in Google Sheets
-2. Copy its spreadsheet ID from the URL
-3. Go to BudgetPulse `Settings`
-4. Paste the ID or full URL
+1. Copy the old sheet ID from the Google Sheets URL
+2. Open BudgetPulse
+3. Go to `Settings`
+4. Paste the old ID or full sheet URL
 5. Click `Save & Verify`
-6. Use the `Open in Google Sheets` link to confirm you are on the correct workbook
+6. Use the `Open in Google Sheets` link shown there to confirm it is the correct workbook
 
-## Sync button in Settings
+## What `Sync Now` does
 
-The `Sync Now` button runs a manual category sync from the configured source.
-Use it after changing the linked workbook or when you want to force a fresh sync.
+The `Sync Now` button in `Settings` runs a manual category sync from the configured source.
 
-## Production configuration
+Use it when:
 
-### Front-end deployment
+- you have just switched sheets
+- you want to refresh categories immediately
+- you want to confirm the new workbook is syncing correctly
 
-GitHub Pages builds the app from `.github/workflows/deploy.yml`.
+## Required GitHub secrets
 
-The build uses:
-
-- `GOOGLE_CLIENT_ID`
-- `BUDGETPULSE_SHEET_ID` if present
-- otherwise `JOINT_SPEND_SHEET_ID` as a legacy fallback
-
-Recommended GitHub secrets:
+For the web app:
 
 - `GOOGLE_CLIENT_ID`
 - `BUDGETPULSE_SHEET_ID`
 
-Legacy fallback still accepted:
+Legacy fallback still supported:
 
 - `JOINT_SPEND_SHEET_ID`
 
-### Apps Script deployment
+For Apps Script deployment:
 
-Apps Script deploys from `.github/workflows/deploy-apps-script.yml`.
-
-The deploy script now prefers:
-
+- `APPS_SCRIPT_ID`
+- `CLASPRC_JSON`
 - `BUDGETPULSE_SHEET_ID`
 
-But still accepts:
+Legacy fallback still supported there too:
 
 - `JOINT_SPEND_SHEET_ID`
-
-This keeps older deployments working while giving the project a clearer sheet secret name.
 
 ## Local development
 
@@ -193,19 +215,19 @@ Install dependencies:
 npm ci
 ```
 
-Run the app locally:
+Run locally:
 
 ```bash
 npm run dev
 ```
 
-Preview the production build locally:
+Preview the production build:
 
 ```bash
 npm run preview
 ```
 
-## Testing
+## Tests
 
 Run all tests:
 
@@ -213,7 +235,7 @@ Run all tests:
 npm test
 ```
 
-Run only unit tests:
+Run unit tests:
 
 ```bash
 npm run test:unit
@@ -231,19 +253,19 @@ Build the app:
 npm run build
 ```
 
-## Deploying
+## Deployment
 
 ### Web app
 
 Push to `main`.
-GitHub Pages deploy runs automatically from `.github/workflows/deploy.yml`.
+GitHub Pages deploy runs from `.github/workflows/deploy.yml`.
 
 ### Apps Script
 
 Push changes under `scripts/apps-script/` or `scripts/deploy-apps-script.mjs`.
-The Apps Script workflow runs automatically from `.github/workflows/deploy-apps-script.yml`.
+Apps Script deploy runs from `.github/workflows/deploy-apps-script.yml`.
 
-You can also deploy manually:
+Manual deploy:
 
 ```bash
 npm run deploy:gs
@@ -255,15 +277,16 @@ Dry run:
 npm run deploy:gs:dry
 ```
 
-## Practical sharing guide
+## Quick guide for a stable shared setup
 
-If you want the app to work cleanly for multiple people, use this setup:
+If you want the app to work properly for multiple users, do this:
 
-1. Create or pick the one Google Sheet that should be the source of truth
+1. Decide which Google Sheet is the real BudgetPulse workbook
 2. Share that sheet with all users
 3. Set `BUDGETPULSE_SHEET_ID` in GitHub Secrets
-4. Push to `main` so GitHub Pages rebuilds with that sheet ID
-5. Ask users to sign in and approve all requested Google permissions
-6. If any user lands on the wrong sheet, repair it from `Settings` using `Save & Verify`
+4. Push to `main`
+5. Let GitHub Pages redeploy
+6. Ask each user to sign in and approve all requested permissions
+7. If anyone lands on the wrong sheet, repair it from `Settings` using `Save & Verify`
 
 That gives you one shared workbook across users, browsers, and devices.
