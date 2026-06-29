@@ -198,7 +198,9 @@ async function findExistingWorkbook() {
 
   if (!response.ok) {
     await throwIfScopeError(response);
-    throw new Error(`Drive search failed with status ${response.status}`);
+    const body = await response.json().catch(() => ({}));
+    const msg = body?.error?.message || `status ${response.status}`;
+    throw new Error(`Drive search failed: ${msg}`);
   }
 
   const data = await response.json();

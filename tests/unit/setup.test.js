@@ -204,12 +204,12 @@ describe('bootstrapSpreadsheet — Drive-based sheet discovery (BUG-006)', () =>
 
     global.fetch
       // Drive search: API error (not a scope error, just a permission issue on the file)
-      .mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ error: { status: 'PERMISSION_DENIED' } }) });
+      .mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ error: { status: 'PERMISSION_DENIED', message: 'mock permission denied' } }) });
 
     const report = await bootstrapSpreadsheet();
 
     expect(report.ready).toBe(false);
-    expect(report.errors[0]).toContain('Drive search failed with status 403');
+    expect(report.errors[0]).toContain('Drive search failed: mock permission denied');
     expect(setSpreadsheetId).not.toHaveBeenCalled();
   });
 });
