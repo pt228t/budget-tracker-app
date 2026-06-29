@@ -69,6 +69,8 @@
 | B-033 | Frontend: Export data as CSV | Export | M5 | S10 | `DONE` |
 | B-034 | Frontend: Dark mode toggle | UX | M5 | S10 | `DONE` |
 | B-040 | Frontend: Premium UX overhaul (Glassmorphism & Nav Gating) | UX | M5 | S16 | `DONE` |
+| B-041 | Frontend: Future-dated transactions support | Feature | M5 | S17 | `TODO` |
+| B-042 | Frontend: Date editing and cache sync | Feature | M5 | S17 | `TODO` |
 | B-035 | Foreign currency support (INR primary) | Feature | Future | - | `CANCELLED` |
 | B-036 | CSV bank statement import | Feature | Future | - | `CANCELLED` |
 
