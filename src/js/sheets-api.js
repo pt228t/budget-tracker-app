@@ -129,11 +129,17 @@ async function _request(url, options = {}) {
       if (response.status === 403) {
         const body = await response.json().catch(() => ({}));
         const reason = body?.error?.details?.[0]?.reason;
-        if (reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT') {
+        const errorsReason = body?.error?.errors?.[0]?.reason;
+        const message = body?.error?.message || '';
+        if (
+          reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT' ||
+          errorsReason === 'insufficientPermissions' ||
+          message.includes('insufficient authentication scopes')
+        ) {
           if (_onScopeInsufficient) _onScopeInsufficient();
           throw new ScopeError();
         }
-        const msg = body?.error?.message || 'HTTP 403 Forbidden';
+        const msg = message || 'HTTP 403 Forbidden';
         throw new SheetsApiError(msg, 403);
       }
 

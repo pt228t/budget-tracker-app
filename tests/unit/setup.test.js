@@ -198,24 +198,19 @@ describe('bootstrapSpreadsheet — Drive-based sheet discovery (BUG-006)', () =>
     expect(setSpreadsheetId).toHaveBeenCalledWith('NEW_SHEET_ID');
   });
 
-  it('creates new sheet when Drive search fails', async () => {
+  it('fails bootstrap when Drive search fails', async () => {
     const { getSpreadsheetId, setSpreadsheetId } = await import('../../src/js/sheets-api.js');
     getSpreadsheetId.mockReturnValueOnce(null);
 
     global.fetch
       // Drive search: API error (not a scope error, just a permission issue on the file)
-      .mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ error: { status: 'PERMISSION_DENIED' } }) })
-      // Sheets create
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ spreadsheetId: 'FALLBACK_SHEET_ID' }) })
-      // metadata (all tabs exist)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ sheets: REQUIRED_TABS.map(t => ({ properties: { title: t } })) })
-      });
+      .mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ error: { status: 'PERMISSION_DENIED' } }) });
 
-    await bootstrapSpreadsheet();
+    const report = await bootstrapSpreadsheet();
 
-    expect(setSpreadsheetId).toHaveBeenCalledWith('FALLBACK_SHEET_ID');
+    expect(report.ready).toBe(false);
+    expect(report.errors[0]).toContain('Drive search failed with status 403');
+    expect(setSpreadsheetId).not.toHaveBeenCalled();
   });
 });
 

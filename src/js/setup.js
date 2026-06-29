@@ -173,7 +173,15 @@ async function throwIfScopeError(response) {
   if (response.status === 403) {
     const body = await response.json().catch(() => ({}));
     const reason = body?.error?.details?.[0]?.reason;
-    if (reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT') throw new ScopeError();
+    const errorsReason = body?.error?.errors?.[0]?.reason;
+    const message = body?.error?.message || '';
+    if (
+      reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT' ||
+      errorsReason === 'insufficientPermissions' ||
+      message.includes('insufficient authentication scopes')
+    ) {
+      throw new ScopeError();
+    }
   }
 }
 
@@ -190,8 +198,7 @@ async function findExistingWorkbook() {
 
   if (!response.ok) {
     await throwIfScopeError(response);
-    console.warn(`[Setup] Drive search failed (${response.status}) — will create new sheet`);
-    return null;
+    throw new Error(`Drive search failed with status ${response.status}`);
   }
 
   const data = await response.json();
