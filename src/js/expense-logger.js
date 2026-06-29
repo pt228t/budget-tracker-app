@@ -63,6 +63,11 @@ export async function initExpenseLogger(formId, listId) {
 
   _injectMissingFields(form);
 
+  const dateInput = form.querySelector('#bp-date');
+  if (dateInput && !dateInput.value) {
+    dateInput.value = _toDateString(new Date());
+  }
+
   const paidBySelect = form.querySelector('#bp-paid-by');
   if (paidBySelect) {
     try {
@@ -221,6 +226,7 @@ async function _handleSubmit(form, listEl) {
     paidByRaw:     form.querySelector('#bp-paid-by')?.value ?? 'me',
     fundingSource: _mapFundingSource(form.querySelector('#payment-source')?.value ?? ''),
     notes:         (form.querySelector('#bp-notes')?.value ?? '').trim(),
+    date:          form.querySelector('#bp-date')?.value ?? '',
   };
 
   const { valid, errors } = validateForm(rawData);
@@ -243,6 +249,7 @@ async function _handleSubmit(form, listEl) {
     paidBy,
     fundingSource: rawData.fundingSource,
     notes:         rawData.notes,
+    date:          rawData.date,
   }, loggedBy);
 
   const month = row[TC.MONTH];
@@ -472,7 +479,7 @@ function _removeTransactionRow(listEl, txnId) {
  */
 export function buildTransactionRow(data, loggedBy) {
   const now   = new Date();
-  const date  = _toDateString(now);
+  const date  = data.date ? String(data.date).trim() : _toDateString(now);
   const month = date.slice(0, 7);
   const ts    = _toTimestamp(now);
   const id    = 'txn_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -645,6 +652,10 @@ function _handleEdit(txnId, itemEl) {
           <input class="form-control" name="amount" type="number" value="${Number(row[TC.AMOUNT])}" min="0.01" step="0.01" required style="height:32px;" />
         </div>
         <div>
+          <label class="form-label" style="font-size:0.75rem;">Date</label>
+          <input class="form-control" name="date" type="date" value="${_esc(String(row[TC.DATE]))}" required style="height:32px;" />
+        </div>
+        <div>
           <label class="form-label" style="font-size:0.75rem;">Category</label>
           <select class="form-control" name="categoryId" style="height:32px;">${categoryOptions}</select>
         </div>
@@ -684,6 +695,7 @@ async function _handleEditSave(txnId, originalRow, form, itemEl) {
   saveBtn.textContent = 'Saving…';
 
   const amount      = parseFloat(form.querySelector('[name="amount"]').value);
+  const date        = form.querySelector('[name="date"]').value;
   const categoryId  = form.querySelector('[name="categoryId"]').value;
   const description = form.querySelector('[name="description"]').value.trim();
   const subCategory = form.querySelector('[name="subCategory"]').value.trim();
@@ -696,10 +708,11 @@ async function _handleEditSave(txnId, originalRow, form, itemEl) {
     return;
   }
 
+  const month = date.slice(0, 7);
   const updatedRow = [
     originalRow[TC.ID],
-    originalRow[TC.DATE],
-    originalRow[TC.MONTH],
+    date,
+    month,
     amount,
     categoryId,
     subCategory,
@@ -720,6 +733,12 @@ async function _handleEditSave(txnId, originalRow, form, itemEl) {
     await updateRow(`Transactions!A${rowNum}:M${rowNum}`, updatedRow);
 
     updateTransactionInCache(String(originalRow[TC.MONTH]), txnId, updatedRow);
+
+    // Synchronize local filter array
+    const idx = _allLoadedTransactions.findIndex(r => String(r[TC.ID]) === String(txnId));
+    if (idx !== -1) {
+      _allLoadedTransactions[idx] = updatedRow;
+    }
 
     const restored = document.createElement('div');
     restored.innerHTML = renderTransactionItem(updatedRow, _buildCategoryMap());

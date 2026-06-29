@@ -124,7 +124,13 @@ export async function initAnalytics(containerId) {
 }
 
 export function filterByMonth(txRows, month) {
-    return txRows.filter(row => String(row[2]).trim() === month);
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    return txRows.filter(row => {
+        const rowMonth = String(row[2]).trim();
+        const rowDate = String(row[1]).trim();
+        return rowMonth === month && rowDate <= todayStr;
+    });
 }
 
 export function calculateExpensesByCategory(txRows) {

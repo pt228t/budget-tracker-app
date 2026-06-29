@@ -236,16 +236,18 @@ export async function loadCategoryBundle(options = {}) {
     readRange('Transactions!A:M').catch(() => []),
   ]);
 
-  // Aggregate current month spent per category
+  // Aggregate current month spent per category (excluding future-dated transactions)
   const today = new Date();
   const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   
   const actuals = {};
   if (Array.isArray(transactions) && transactions.length > 1) {
     const txRows = transactions.slice(1);
     for (const row of txRows) {
       const month = String(row[2] ?? '').trim();
-      if (month === currentMonth) {
+      const dateStr = String(row[1] ?? '').trim();
+      if (month === currentMonth && dateStr <= todayStr) {
         const amount = parseFloat(row[3]) || 0;
         const catId = String(row[4] ?? '').trim();
         if (catId) {

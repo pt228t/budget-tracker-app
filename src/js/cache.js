@@ -193,6 +193,18 @@ export function rollbackTransaction(month, transactionId) {
 }
 
 export function updateTransactionInCache(month, txnId, updatedRow) {
+  const newMonth = String(updatedRow[2] ?? '').trim();
+  if (newMonth && newMonth !== month) {
+    const oldEntry = _txnCache.get(month);
+    if (oldEntry) {
+      oldEntry.rows = oldEntry.rows.filter(r => String(r[0]) !== String(txnId));
+    }
+    const newEntry = _txnCache.get(newMonth);
+    if (newEntry) {
+      newEntry.rows.push(updatedRow);
+    }
+    return;
+  }
   const entry = _txnCache.get(month);
   if (!entry) return;
   const idx = entry.rows.findIndex(r => String(r[0]) === String(txnId));

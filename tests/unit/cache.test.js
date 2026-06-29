@@ -154,6 +154,36 @@ describe('optimisticAppendTransaction / rollbackTransaction', () => {
   });
 });
 
+describe('updateTransactionInCache', () => {
+  const MONTH = '2026-06';
+
+  beforeEach(() => {
+    clearTransactionsCache();
+    setTransactionsCache(MONTH, [['txn_1', '2026-06-01', MONTH, 100]]);
+    setTransactionsCache('2026-07', [['txn_other', '2026-07-01', '2026-07', 200]]);
+  });
+
+  it('updates matching row in same month cache', () => {
+    const updated = ['txn_1', '2026-06-02', MONTH, 150];
+    updateTransactionInCache(MONTH, 'txn_1', updated);
+    const rows = getTransactionsCache(MONTH);
+    expect(rows[0]).toEqual(updated);
+  });
+
+  it('moves row to new month cache if month changes', () => {
+    const updated = ['txn_1', '2026-07-02', '2026-07', 150];
+    updateTransactionInCache(MONTH, 'txn_1', updated);
+
+    // Old month should not contain txn_1 anymore
+    expect(getTransactionsCache(MONTH)).toHaveLength(0);
+
+    // New month should contain both txn_other and txn_1
+    const newRows = getTransactionsCache('2026-07');
+    expect(newRows).toHaveLength(2);
+    expect(newRows.find(r => r[0] === 'txn_1')).toEqual(updated);
+  });
+});
+
 // ─── Vendor Patterns (localStorage) ──────────────────────────────────────────
 
 describe('vendor patterns', () => {

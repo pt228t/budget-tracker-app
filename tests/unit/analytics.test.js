@@ -92,6 +92,16 @@ describe('filterByMonth', () => {
     expect(result[1][0]).toBe('tx3');
   });
 
+  it('filters out future-dated transactions', () => {
+    const rows = [
+      ['tx_past', '2026-06-28', '2026-06', '100', 'Cat1', '', ''],
+      ['tx_future', '2026-06-30', '2026-06', '200', 'Cat1', '', ''],
+    ];
+    const result = filterByMonth(rows, '2026-06');
+    expect(result).toHaveLength(1);
+    expect(result[0][0]).toBe('tx_past');
+  });
+
   it('returns [] when no rows match', () => {
     expect(filterByMonth(ROWS, '2025-01')).toEqual([]);
   });

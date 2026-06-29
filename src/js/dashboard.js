@@ -50,11 +50,13 @@ export function renderPersonalSettlement(transactions = [], allowedUsers = [], c
   const today = new Date();
   const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
-  // Filter transactions for current month and Personal funding source
+  // Filter transactions for current month and Personal funding source, excluding future-dated entries
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const personalTxns = transactions.slice(1).filter(row => {
     const month = String(row[2] ?? '').trim();
+    const dateStr = String(row[1] ?? '').trim();
     const funding = String(row[8] ?? '').trim();
-    return month === currentMonth && funding === 'Personal';
+    return month === currentMonth && funding === 'Personal' && dateStr <= todayStr;
   });
 
   const spendingMap = {};

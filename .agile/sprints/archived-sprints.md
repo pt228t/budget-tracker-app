@@ -275,6 +275,31 @@ Implement a premium, state-of-the-art visual design (glassmorphism + mesh radial
 - [app-shell.css](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/css/app-shell.css) — Upgraded app background with radial indigo-violet glow meshes.
 - [components.css](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/css/components.css) — Overhauled `.card` styles for a modern, glassmorphic interactive experience.
 
+---
+
+# Sprint 17: Future-Dated Transactions & Sync Editing
+
+## Goal
+Implement support for future-dated transactions, restrict prematurely showing them in analytics/dashboard summaries until that day arrives, and enable date editing with state-syncing.
+
+## Tasks Completed
+- **B-041: Frontend: Future-dated transactions support**
+  - Added a Transaction Date input to the quick log form in `index.html` (defaulting to today).
+  - Modified `buildTransactionRow` to accept custom dates and dynamically map the transaction month.
+  - Filtered out future-dated entries (date > today) in category budget summaries (`categories.js`), analytics month queries (`analytics.js`), and personal settlement reconciliations (`dashboard.js`).
+- **B-042: Frontend: Date editing and cache sync**
+  - Added a Date input to the interactive edit form.
+  - Updated `_handleEditSave` to extract and validate the new date, dynamically update `_allLoadedTransactions` local state to maintain correct lists on filtering, and refresh the DOM view.
+  - Enhanced `updateTransactionInCache` in `cache.js` to support moving edited transactions between monthly cache buckets when month-shifting occurs.
+
+## Completed Code & Files
+- [index.html](file:///Users/prashant228/Documents/Projects/budget-tracker-app/index.html) — Added Date input to logging form.
+- [expense-logger.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/expense-logger.js) — Handled Date input on log and edit forms, synchronized `_allLoadedTransactions` on save.
+- [cache.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/cache.js) — Added month shifting support inside `updateTransactionInCache`.
+- [categories.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/categories.js) — Excluded future entries in spent aggregation.
+- [analytics.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/analytics.js) — Excluded future entries in analytics `filterByMonth`.
+- [dashboard.js](file:///Users/prashant228/Documents/Projects/budget-tracker-app/src/js/dashboard.js) — Excluded future entries in personal settlements.
+
 
 
 

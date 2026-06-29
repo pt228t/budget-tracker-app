@@ -143,6 +143,13 @@ describe('buildTransactionRow', () => {
     const r2 = buildTransactionRow(BASE, 'prashant@gmail.com');
     expect(r1[0]).not.toBe(r2[0]);
   });
+
+  it('col 1 & 2 — uses custom date and derives month if provided', () => {
+    const custom = { ...BASE, date: '2026-07-15' };
+    const row = buildTransactionRow(custom, 'prashant@gmail.com');
+    expect(row[1]).toBe('2026-07-15');
+    expect(row[2]).toBe('2026-07');
+  });
 });
 
 // ─── validateForm ─────────────────────────────────────────────────────────────
