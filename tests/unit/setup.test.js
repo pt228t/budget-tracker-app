@@ -19,9 +19,16 @@ vi.mock('../../src/js/sheets-api.js', () => ({
 }));
 
 describe('Setup / Bootstrap Module', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
     global.fetch = vi.fn();
+    window.history.replaceState({}, '', '?');
+
+    const sheetsApi = await import('../../src/js/sheets-api.js');
+    sheetsApi.getSpreadsheetId.mockReset();
+    sheetsApi.getSpreadsheetId.mockReturnValue('MOCK_SPREADSHEET_ID');
+    sheetsApi.setSpreadsheetId.mockReset();
   });
 
   it('should define all 7 required tabs', () => {
@@ -146,10 +153,70 @@ describe('Setup / Bootstrap Module', () => {
   });
 });
 
-describe('bootstrapSpreadsheet — Drive-based sheet discovery (BUG-006)', () => {
-  beforeEach(() => {
+describe('bootstrapSpreadsheet - preferred sheet sources', () => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
     global.fetch = vi.fn();
+    window.history.replaceState({}, '', '?');
+
+    const sheetsApi = await import('../../src/js/sheets-api.js');
+    sheetsApi.getSpreadsheetId.mockReset();
+    sheetsApi.getSpreadsheetId.mockReturnValue('MOCK_SPREADSHEET_ID');
+    sheetsApi.setSpreadsheetId.mockReset();
+  });
+
+  it('prefers configured sheet ID over stale localStorage cache', async () => {
+    const { getSpreadsheetId, setSpreadsheetId } = await import('../../src/js/sheets-api.js');
+    vi.stubEnv('VITE_BUDGETPULSE_SHEET_ID', 'CANONICAL_SHEET_ID');
+    getSpreadsheetId.mockReturnValueOnce('STALE_LOCAL_SHEET_ID');
+
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ sheets: REQUIRED_TABS.map(t => ({ properties: { title: t } })) })
+    });
+
+    const report = await bootstrapSpreadsheet();
+
+    expect(report.ready).toBe(true);
+    expect(setSpreadsheetId).toHaveBeenCalledWith('CANONICAL_SHEET_ID');
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch.mock.calls[0][0]).toContain('/spreadsheets/CANONICAL_SHEET_ID?fields=');
+  });
+
+  it('prefers spreadsheetId from URL params and normalizes shared sheet links', async () => {
+    const { getSpreadsheetId, setSpreadsheetId } = await import('../../src/js/sheets-api.js');
+    getSpreadsheetId.mockReturnValueOnce(null);
+    window.history.replaceState(
+      {},
+      '',
+      '?spreadsheetId=https://docs.google.com/spreadsheets/d/SHARED_SHEET_ID/edit#gid=0'
+    );
+
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ sheets: REQUIRED_TABS.map(t => ({ properties: { title: t } })) })
+    });
+
+    const report = await bootstrapSpreadsheet();
+
+    expect(report.ready).toBe(true);
+    expect(setSpreadsheetId).toHaveBeenCalledWith('SHARED_SHEET_ID');
+    expect(global.fetch.mock.calls[0][0]).toContain('/spreadsheets/SHARED_SHEET_ID?fields=');
+  });
+});
+
+describe('bootstrapSpreadsheet — Drive-based sheet discovery (BUG-006)', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+    global.fetch = vi.fn();
+    window.history.replaceState({}, '', '?');
+
+    const sheetsApi = await import('../../src/js/sheets-api.js');
+    sheetsApi.getSpreadsheetId.mockReset();
+    sheetsApi.getSpreadsheetId.mockReturnValue('MOCK_SPREADSHEET_ID');
+    sheetsApi.setSpreadsheetId.mockReset();
   });
 
   it('reuses existing Drive sheet when localStorage is empty', async () => {

@@ -215,20 +215,25 @@ function printDryRunSummary(scriptId) {
 // Only runs during actual deploy (not dry-run). CI checkout is ephemeral
 // so modified files are never committed back.
 function injectEnvVars() {
-  const jointSpendId = process.env.JOINT_SPEND_SHEET_ID;
-  if (!jointSpendId) {
+  const budgetPulseSheetId =
+    process.env.BUDGETPULSE_SHEET_ID || process.env.JOINT_SPEND_SHEET_ID;
+  if (!budgetPulseSheetId) {
     if (IS_CI) {
-      fail('JOINT_SPEND_SHEET_ID env var not set — required for deploy. Add it as a GitHub Secret.');
+      fail(
+        'BUDGETPULSE_SHEET_ID env var not set — required for deploy. Add it as a GitHub Secret. JOINT_SPEND_SHEET_ID is still accepted as a legacy fallback.'
+      );
     }
-    warn('JOINT_SPEND_SHEET_ID not set — JOINT_SPEND_ID_PLACEHOLDER remains in Config.gs (local dev only)');
+    warn(
+      'BUDGETPULSE_SHEET_ID not set — JOINT_SPEND_ID_PLACEHOLDER remains in Config.gs (local dev only). JOINT_SPEND_SHEET_ID is still accepted as a legacy fallback.'
+    );
     return;
   }
 
   const configPath = resolve(GS_DIR, 'Config.gs');
   const original = readFileSync(configPath, 'utf8');
-  const injected = original.replace(/JOINT_SPEND_ID_PLACEHOLDER/g, jointSpendId);
+  const injected = original.replace(/JOINT_SPEND_ID_PLACEHOLDER/g, budgetPulseSheetId);
   writeFileSync(configPath, injected, 'utf8');
-  log(`Injected JOINT_SPEND_SHEET_ID into Config.gs (${jointSpendId.slice(0, 8)}...)`);
+  log(`Injected BUDGETPULSE_SHEET_ID into Config.gs (${budgetPulseSheetId.slice(0, 8)}...)`);
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────

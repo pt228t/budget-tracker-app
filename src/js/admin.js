@@ -113,9 +113,10 @@ export async function initSettingsPanel(containerId) {
         <div>
           <label class="form-label" style="font-weight: 600;">Linked Google Spreadsheet ID</label>
           <div style="display: flex; gap: 10px; margin-top: 8px;">
-            <input type="text" id="settings-sheet-id" class="form-control" value="${currentId}" placeholder="Enter Spreadsheet ID" style="font-family: monospace; font-size: 0.875rem;" />
+            <input type="text" id="settings-sheet-id" class="form-control" value="${currentId}" placeholder="Paste a Spreadsheet ID or full Google Sheets URL" style="font-family: monospace; font-size: 0.875rem;" />
             <button type="button" id="settings-save-sheet-btn" class="btn btn-primary">Save &amp; Verify</button>
           </div>
+          <p class="text-muted" style="font-size: 0.8rem; margin-top: 6px;">Use this to repair or switch sheets. Paste the original sheet ID or full Sheets URL, then click <strong>Save &amp; Verify</strong>. If verification fails, the previous sheet link is restored automatically.</p>
           ${currentId ? `<p class="text-muted" style="font-size: 0.8rem; margin-top: 6px;">Open in Google Sheets: <a href="https://docs.google.com/spreadsheets/d/${currentId}/edit" target="_blank" rel="noopener noreferrer" style="color: var(--color-brand-primary); text-decoration: underline;">${currentId}</a></p>` : ''}
           <p id="settings-verify-status" style="margin-top: 8px; font-size: 0.875rem; display: none;"></p>
         </div>
@@ -143,7 +144,7 @@ export async function initSettingsPanel(containerId) {
     saveBtn.addEventListener('click', async () => {
       const newId = input.value.trim();
       if (!newId) {
-        verifyStatus.textContent = 'Please enter a valid spreadsheet ID.';
+        verifyStatus.textContent = 'Please enter a spreadsheet ID or full Google Sheets URL.';
         verifyStatus.className = 'text-danger';
         verifyStatus.style.display = '';
         return;

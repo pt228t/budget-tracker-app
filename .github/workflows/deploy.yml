@@ -28,6 +28,7 @@ jobs:
       - name: Build project
         env:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          VITE_BUDGETPULSE_SHEET_ID: ${{ secrets.BUDGETPULSE_SHEET_ID || secrets.JOINT_SPEND_SHEET_ID }}
         run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

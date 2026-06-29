@@ -38,6 +38,8 @@ jobs:
       - name: Validate .gs files (dry-run guardrail)
         env:
           APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+          BUDGETPULSE_SHEET_ID: ${{ secrets.BUDGETPULSE_SHEET_ID || secrets.JOINT_SPEND_SHEET_ID }}
+          JOINT_SPEND_SHEET_ID: ${{ secrets.JOINT_SPEND_SHEET_ID || secrets.BUDGETPULSE_SHEET_ID }}
         run: node scripts/deploy-apps-script.mjs --dry-run
 
       # Write clasp credentials from secret. CLASPRC_JSON is the full
@@ -53,7 +55,8 @@ jobs:
         if: ${{ github.event.inputs.dry_run != 'true' }}
         env:
           APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
-          JOINT_SPEND_SHEET_ID: ${{ secrets.JOINT_SPEND_SHEET_ID }}
+          BUDGETPULSE_SHEET_ID: ${{ secrets.BUDGETPULSE_SHEET_ID || secrets.JOINT_SPEND_SHEET_ID }}
+          JOINT_SPEND_SHEET_ID: ${{ secrets.JOINT_SPEND_SHEET_ID || secrets.BUDGETPULSE_SHEET_ID }}
         run: node scripts/deploy-apps-script.mjs
 
       - name: Dry run summary

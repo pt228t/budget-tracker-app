@@ -91,8 +91,16 @@ export async function bootstrapSpreadsheet(userEmail = '') {
   const report = { ready: false, created: [], existing: [], errors: [] };
 
   try {
-    // 1. Check if we have an ID
-    let spreadsheetId = getSpreadsheetId();
+    // 1. Prefer explicit spreadsheet configuration over per-browser cache
+    const preferredSheet = getPreferredSpreadsheet();
+    let spreadsheetId = preferredSheet.id;
+
+    if (spreadsheetId) {
+      console.log(`[Setup] Using ${preferredSheet.source} spreadsheet ID: ${spreadsheetId}`);
+      if (preferredSheet.persist) {
+        setSpreadsheetId(spreadsheetId);
+      }
+    }
 
     if (!spreadsheetId) {
       console.log('[Setup] No spreadsheet ID in localStorage. Searching Drive for existing BudgetPulse sheet...');
@@ -183,6 +191,45 @@ async function throwIfScopeError(response) {
       throw new ScopeError();
     }
   }
+}
+
+function getPreferredSpreadsheet() {
+  const urlSpreadsheetId = getSpreadsheetIdFromUrl();
+  if (urlSpreadsheetId) {
+    return { id: urlSpreadsheetId, source: 'URL', persist: true };
+  }
+
+  const configuredSpreadsheetId = extractSpreadsheetId(import.meta.env.VITE_BUDGETPULSE_SHEET_ID);
+  if (configuredSpreadsheetId) {
+    return { id: configuredSpreadsheetId, source: 'configured', persist: true };
+  }
+
+  const cachedSpreadsheetId = getSpreadsheetId();
+  if (cachedSpreadsheetId) {
+    return { id: cachedSpreadsheetId, source: 'localStorage', persist: false };
+  }
+
+  return { id: null, source: 'none', persist: false };
+}
+
+function getSpreadsheetIdFromUrl() {
+  if (typeof window === 'undefined' || !window.location?.search) {
+    return null;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return (
+    extractSpreadsheetId(params.get('spreadsheetId')) ||
+    extractSpreadsheetId(params.get('sheetId'))
+  );
+}
+
+function extractSpreadsheetId(value) {
+  const cleanValue = value ? String(value).trim() : '';
+  if (!cleanValue) return null;
+
+  const match = cleanValue.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  return match ? match[1] : cleanValue;
 }
 
 async function findExistingWorkbook() {
