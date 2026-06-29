@@ -58,8 +58,8 @@
 
 | ID | Story | Epic | Milestone | Sprint | Status |
 |----|-------|------|-----------|--------|--------|
-| B-027 | Frontend: Day-of-week spending heatmap | Analytics | M5 | S9 | `TODO` |
-| B-028 | Frontend: Person-wise spending split chart | Analytics | M5 | S9 | `TODO` |
+| B-027 | Frontend: Day-of-week spending heatmap | Analytics | M5 | S15 | `TODO` |
+| B-028 | Frontend: Person-wise spending split chart | Analytics | M5 | S15 | `TODO` |
 | B-029 | Apps Script: Recurring payment reminder (3 days before) | Notifications | M5 | S9 | `TODO` |
 | B-030 | Frontend: Advanced filters (by person, category, date range) | Analytics | M5 | S9 | `DONE` |
 | B-031 | Frontend: Manual sync trigger button | Sync | M5 | S10 | `DONE` |
@@ -224,3 +224,5 @@
 | BUG-001 | Sync.gs mapping `monthly_amount` to incorrect column index | AppScript Sync | `DONE` | Fixed column mapping and added unit tests in `sync.test.js`. |
 | BUG-002 | `clasp push` CI failure with GCP Service Account | CI/CD | `DONE` | Pivoted to Refresh Token auth approach; updated GitHub Actions. |
 | BUG-003 | Daily sync trigger (B-003) missing programmatic setup | Automation | `DONE` | Added `Triggers.gs` to create custom sheet menu for one-click installation. |
+| BUG-004 | Silent new sheet creation on Drive search failure | Setup/Drive | `DONE` | Throw error on Drive search failure to prevent duplicate sheet creation. |
+| BUG-005 | Settings sheet verification fails when full URL pasted | Settings/API | `DONE` | Automatically extract spreadsheet ID from URL in `setSpreadsheetId`. |
