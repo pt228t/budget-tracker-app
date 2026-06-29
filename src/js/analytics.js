@@ -20,11 +20,14 @@ export async function initAnalytics(containerId) {
         const today = new Date();
         const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
         const txRows = filterByMonth(allTxRows, month);
+        const upcoming = getUpcomingForMonth(allTxRows, month);
+        const upcomingBanner = renderUpcomingBanner(upcoming);
 
         if (txRows.length === 0) {
             container.innerHTML = `
+                ${upcomingBanner}
                 <div class="empty-state" style="text-align:center;padding:48px 16px;">
-                    <p class="text-secondary" style="margin-bottom:8px;">No transactions this month.</p>
+                    <p class="text-secondary" style="margin-bottom:8px;">No transactions counted yet this month.</p>
                     <p class="text-muted" style="font-size:0.875rem;">Log an expense to see analytics here.</p>
                 </div>
             `;
@@ -53,6 +56,7 @@ export async function initAnalytics(containerId) {
         const momData = calculateMoMData(allTxRows, catRows, bhRows);
 
         container.innerHTML = `
+            ${upcomingBanner}
             <div class="analytics-charts" style="display: flex; gap: 20px; margin-bottom: 30px; justify-content: center; flex-wrap: wrap;">
                 <div style="width: 400px; max-width: 100%;">
                     <canvas id="categoryDonutChart"></canvas>
@@ -131,6 +135,37 @@ export function filterByMonth(txRows, month) {
         const rowDate = String(row[1]).trim();
         return rowMonth === month && rowDate <= todayStr;
     });
+}
+
+/**
+ * Counts/sums month rows dated after today — the future-dated expenses that
+ * filterByMonth intentionally excludes from analytics. Used to surface them
+ * so they aren't silently missing.
+ *
+ * @returns {{ count: number, total: number }}
+ */
+export function getUpcomingForMonth(txRows, month) {
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    let count = 0;
+    let total = 0;
+    for (const row of txRows) {
+        const rowMonth = String(row[2]).trim();
+        const rowDate = String(row[1]).trim();
+        if (rowMonth === month && rowDate > todayStr) {
+            count++;
+            total += parseFloat(row[3]) || 0;
+        }
+    }
+    return { count, total };
+}
+
+function renderUpcomingBanner({ count, total }) {
+    if (!count) return '';
+    const plural = count > 1 ? 's' : '';
+    return `<div class="analytics-upcoming-banner" role="status">
+        📅 ${count} upcoming expense${plural} (₹${total.toLocaleString('en-IN')}) dated later this month — not counted in analytics until the date arrives.
+    </div>`;
 }
 
 export function calculateExpensesByCategory(txRows) {

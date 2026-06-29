@@ -4,6 +4,7 @@ import {
   calculateBudgetVsActual,
   getTopExpenses,
   filterByMonth,
+  getUpcomingForMonth,
   renderTopExpensesTable,
   calculateMoMData,
   calculateDayOfWeekData,
@@ -108,6 +109,43 @@ describe('filterByMonth', () => {
 
   it('returns [] for empty input', () => {
     expect(filterByMonth([], '2026-06')).toEqual([]);
+  });
+});
+
+// ─── getUpcomingForMonth ──────────────────────────────────────────────────────
+
+describe('getUpcomingForMonth', () => {
+  // Mirrors filterByMonth fixtures: today is treated as ~2026-06-29.
+  const ymToday = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  })();
+
+  it('counts and sums month rows dated after today', () => {
+    const rows = [
+      ['tx_past',   '2026-06-28', '2026-06', '100', 'Cat1', '', ''],
+      ['tx_future', '2026-06-30', '2026-06', '200', 'Cat1', '', ''],
+      ['tx_fut2',   '2026-06-30', '2026-06', '50',  'Cat2', '', ''],
+    ];
+    const result = getUpcomingForMonth(rows, '2026-06');
+    expect(result.count).toBe(2);
+    expect(result.total).toBe(250);
+  });
+
+  it('ignores rows from other months', () => {
+    const rows = [
+      ['tx_future_other', '2026-07-30', '2026-07', '500', 'Cat1', '', ''],
+    ];
+    expect(getUpcomingForMonth(rows, '2026-06')).toEqual({ count: 0, total: 0 });
+  });
+
+  it('returns zero when nothing is upcoming', () => {
+    const rows = [['tx_past', '2026-06-01', '2026-06', '100', 'Cat1', '', '']];
+    expect(getUpcomingForMonth(rows, '2026-06')).toEqual({ count: 0, total: 0 });
+  });
+
+  it('handles empty input', () => {
+    expect(getUpcomingForMonth([], ymToday)).toEqual({ count: 0, total: 0 });
   });
 });
 

@@ -583,12 +583,14 @@ export function renderTransactionItem(row, catMap) {
   const catName = catMap[catId] || catId;
 
   const fundingClass = funding === 'Joint' ? 'badge-joint' : 'badge-personal';
+  const isUpcoming = _isFutureDate(date);
+  const upcomingBadge = isUpcoming ? '<span class="badge badge-upcoming">Upcoming</span> ' : '';
 
-  return `<div class="transaction-item" data-txn-id="${_esc(txnId)}" data-month="${_esc(month)}">
+  return `<div class="transaction-item${isUpcoming ? ' transaction-item--upcoming' : ''}" data-txn-id="${_esc(txnId)}" data-month="${_esc(month)}">
   <div class="transaction-item__left">
     <span class="transaction-item__desc">${_esc(desc)}</span>
     <span class="transaction-item__meta">
-      <span class="badge ${_esc(fundingClass)}">${_esc(funding)}</span>
+      ${upcomingBadge}<span class="badge ${_esc(fundingClass)}">${_esc(funding)}</span>
       &middot; ${_esc(catName)}
       &middot; <time datetime="${_esc(date)}">${_esc(date)}</time>
     </span>
@@ -882,6 +884,11 @@ function _mapFundingSource(value) {
 
 function _toDateString(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function _isFutureDate(dateStr) {
+  if (!dateStr) return false;
+  return String(dateStr).trim() > _toDateString(new Date());
 }
 
 function _toTimestamp(d) {

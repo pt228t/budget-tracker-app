@@ -249,6 +249,23 @@ describe('renderTransactionItem', () => {
     const html = renderTransactionItem(ROW, CATS);
     expect(html).toContain('Joint');
   });
+
+  it('does not show Upcoming badge for a past-dated row', () => {
+    const html = renderTransactionItem(ROW, CATS);
+    expect(html).not.toContain('Upcoming');
+  });
+
+  it('shows Upcoming badge for a future-dated row', () => {
+    const future = new Date();
+    future.setDate(future.getDate() + 5);
+    const ymd = `${future.getFullYear()}-${String(future.getMonth() + 1).padStart(2, '0')}-${String(future.getDate()).padStart(2, '0')}`;
+    const futureRow = [...ROW];
+    futureRow[1] = ymd;            // date
+    futureRow[2] = ymd.slice(0, 7); // month
+    const html = renderTransactionItem(futureRow, CATS);
+    expect(html).toContain('Upcoming');
+    expect(html).toContain('transaction-item--upcoming');
+  });
 });
 
 // ─── vendor suggestion integration ───────────────────────────────────────────
