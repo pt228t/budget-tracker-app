@@ -470,16 +470,129 @@ function initWinterTheme() {
     }
   }
 
+  // Pre-generate tree metadata so they stay consistent on redraw/resize
+  const treeCount = 10;
+  const trees = Array.from({ length: treeCount }, (_, i) => ({
+    xPercent: 0.05 + (i * 0.9 / (treeCount - 1)) + (Math.random() * 0.04 - 0.02),
+    size: Math.random() * 30 + 40
+  }));
+
+  function drawMountains(theme) {
+    const farColor = theme === 'dark' ? 'rgba(30, 27, 75, 0.4)' : 'rgba(224, 231, 255, 0.5)';
+    const nearColor = theme === 'dark' ? 'rgba(49, 46, 129, 0.45)' : 'rgba(199, 210, 254, 0.55)';
+    const snowColor = theme === 'dark' ? '#cbd5e1' : '#eff6ff';
+
+    // Far range
+    ctx.fillStyle = farColor;
+    ctx.beginPath();
+    ctx.moveTo(0, height);
+    ctx.lineTo(0, height - 150);
+    ctx.lineTo(width * 0.2, height - 220);
+    ctx.lineTo(width * 0.4, height - 140);
+    ctx.lineTo(width * 0.65, height - 250);
+    ctx.lineTo(width * 0.85, height - 170);
+    ctx.lineTo(width, height - 210);
+    ctx.lineTo(width, height);
+    ctx.closePath();
+    ctx.fill();
+
+    // Far snow peaks
+    ctx.fillStyle = snowColor;
+    const farPeaks = [
+      { x: width * 0.2, y: height - 220, w: 40 },
+      { x: width * 0.65, y: height - 250, w: 55 }
+    ];
+    for (const p of farPeaks) {
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x - p.w, p.y + p.w * 0.8);
+      ctx.lineTo(p.x + p.w, p.y + p.w * 0.8);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Near range
+    ctx.fillStyle = nearColor;
+    ctx.beginPath();
+    ctx.moveTo(0, height);
+    ctx.lineTo(0, height - 100);
+    ctx.lineTo(width * 0.3, height - 170);
+    ctx.lineTo(width * 0.55, height - 110);
+    ctx.lineTo(width * 0.8, height - 190);
+    ctx.lineTo(width, height - 120);
+    ctx.lineTo(width, height);
+    ctx.closePath();
+    ctx.fill();
+
+    // Near snow peaks
+    for (const p of [
+      { x: width * 0.3, y: height - 170, w: 35 },
+      { x: width * 0.8, y: height - 190, w: 45 }
+    ]) {
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x - p.w, p.y + p.w * 0.8);
+      ctx.lineTo(p.x + p.w, p.y + p.w * 0.8);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  function drawPineTree(x, y, treeHeight, theme) {
+    const foliageColor = theme === 'dark' ? '#0f172a' : '#1e1b4b';
+    const snowColor = theme === 'dark' ? '#cbd5e1' : '#eff6ff';
+
+    // Trunk
+    ctx.fillStyle = theme === 'dark' ? '#334155' : '#475569';
+    ctx.fillRect(x - 3, y - 8, 6, 8);
+
+    // Foliage tiers
+    for (let i = 0; i < 3; i++) {
+      const levelY = y - 8 - (i * treeHeight * 0.25);
+      const levelWidth = treeHeight * 0.25 * (1 - i * 0.22);
+      const levelHeight = treeHeight * 0.35;
+
+      ctx.fillStyle = foliageColor;
+      ctx.beginPath();
+      ctx.moveTo(x, levelY - levelHeight);
+      ctx.lineTo(x - levelWidth, levelY);
+      ctx.lineTo(x + levelWidth, levelY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Snow on foliage tips
+      ctx.fillStyle = snowColor;
+      ctx.beginPath();
+      ctx.moveTo(x, levelY - levelHeight);
+      ctx.lineTo(x - levelWidth * 0.35, levelY - levelHeight + levelHeight * 0.35);
+      ctx.lineTo(x + levelWidth * 0.35, levelY - levelHeight + levelHeight * 0.35);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
   const count = Math.min(120, Math.floor((width * height) / 10000));
   const snowflakes = Array.from({ length: count }, () => new Snowflake());
 
   function animate() {
     ctx.clearRect(0, 0, width, height);
     const theme = document.documentElement.getAttribute('data-theme') || 'light';
+
+    // 1. Draw Mountains
+    drawMountains(theme);
+
+    // 2. Draw Pine Trees
+    for (const tree of trees) {
+      const tx = tree.xPercent * width;
+      drawPineTree(tx, height, tree.size, theme);
+    }
+
+    // 3. Draw Falling Snow on top
     for (const flake of snowflakes) {
       flake.update();
       flake.draw(theme);
     }
+
     requestAnimationFrame(animate);
   }
 
