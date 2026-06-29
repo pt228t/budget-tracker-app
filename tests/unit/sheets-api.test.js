@@ -30,7 +30,8 @@ import {
   SheetsApiError,
   OfflineError,
   AuthError,
-  SPREADSHEET_ID,
+  getSpreadsheetId,
+  setSpreadsheetId,
 } from '../../src/js/sheets-api.js';
 
 import { getAccessToken } from '../../src/js/auth.js';
@@ -377,5 +378,20 @@ describe('removeAuthorizedUser', () => {
     const patchCall = global.fetch.mock.calls[1];
     const body = JSON.parse(patchCall[1].body);
     expect(body.values[0][0]).toBe('other@x.com');
+  });
+});
+
+describe('getSpreadsheetId / setSpreadsheetId', () => {
+  it('gets ID from localStorage', () => {
+    getSpreadsheetId();
+    expect(global.localStorage.getItem).toHaveBeenCalledWith('bp_spreadsheet_id');
+  });
+
+  it('sets clean ID and extracts it from URL', () => {
+    setSpreadsheetId('https://docs.google.com/spreadsheets/d/168xfb7vNBZQyHvy5e5ceCDGhGvQJZMb3UhaZdycFIMg/edit?gid=397596478#gid=397596478');
+    expect(global.localStorage.setItem).toHaveBeenCalledWith('bp_spreadsheet_id', '168xfb7vNBZQyHvy5e5ceCDGhGvQJZMb3UhaZdycFIMg');
+
+    setSpreadsheetId('168xfb7vNBZQyHvy5e5ceCDGhGvQJZMb3UhaZdycFIMg');
+    expect(global.localStorage.setItem).toHaveBeenCalledWith('bp_spreadsheet_id', '168xfb7vNBZQyHvy5e5ceCDGhGvQJZMb3UhaZdycFIMg');
   });
 });

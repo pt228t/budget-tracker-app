@@ -22,7 +22,12 @@ export function getSpreadsheetId() {
 }
 
 export function setSpreadsheetId(id) {
-  localStorage.setItem('bp_spreadsheet_id', id);
+  let cleanId = id ? id.trim() : '';
+  const match = cleanId.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (match) {
+    cleanId = match[1];
+  }
+  localStorage.setItem('bp_spreadsheet_id', cleanId);
 }
 
 function getBaseUrl() {
