@@ -45,11 +45,10 @@ export function renderAppShell() {
       <div class="container shell-layout">
         <header class="shell-header">
           <div>
-            <p class="shell-eyebrow">BudgetPulse</p>
-            <h1 data-testid="app-title">Google Sheets Budget Tracking Without a Backend</h1>
+            <p class="shell-eyebrow">Keep your finances in rhythm</p>
+            <h1 data-testid="app-title">BudgetPulse</h1>
             <p class="shell-copy">
-              Static frontend shell for authentication, daily sync, expense logging,
-              and budget health analytics.
+              Private, serverless budget tracking. Securely backed by your own Google Drive.
             </p>
           </div>
           <div class="shell-actions" data-testid="login-shell">

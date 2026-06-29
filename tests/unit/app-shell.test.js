@@ -6,7 +6,7 @@ describe('renderAppShell', () => {
     document.body.innerHTML = renderAppShell();
 
     expect(document.querySelector('[data-testid="app-title"]')?.textContent).toContain(
-      'Google Sheets Budget Tracking'
+      'BudgetPulse'
     );
     expect(document.querySelector('[data-testid="login-shell"]')).not.toBeNull();
     expect(document.querySelectorAll('[data-testid="overview-card"]')).toHaveLength(3);
