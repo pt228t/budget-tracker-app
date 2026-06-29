@@ -432,172 +432,370 @@ function initWinterTheme() {
   if (!canvas) return;
 
   const ctx = canvas.getContext('2d');
-  let width = canvas.width = window.innerWidth;
-  let height = canvas.height = window.innerHeight;
+  let width = canvas.width = window.innerWidth * devicePixelRatio;
+  let height = canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  let W = window.innerWidth;
+  let H = window.innerHeight;
 
+  // ─── Color Palettes ───────────────────────────────────────────────
+  const palettes = {
+    dark: {
+      sky:        ['#0f0e1a', '#1a1633', '#252145'],
+      // 3 mountain layers: far → mid → near
+      mtFar:      { top: '#2d2854', bot: '#1e1940' },
+      mtMid:      { top: '#3b3570', bot: '#2a2555' },
+      mtNear:     { top: '#4a4285', bot: '#352f65' },
+      fog:        'rgba(15, 14, 26, 0.35)',
+      snow:       'rgba(200, 210, 230, 0.85)',
+      snowCap:    '#c8d4ec',
+      ground:     { top: '#3b3570', bot: '#252145' },
+      groundSnow: 'rgba(200, 210, 230, 0.12)',
+      treeTrunk:  '#2a2555',
+      treeFoliage:['#1a2e1a', '#1e3a1e', '#224422'],
+      treeSnow:   'rgba(200, 215, 235, 0.7)',
+      flakeNear:  (o) => `rgba(255, 255, 255, ${o})`,
+      flakeMid:   (o) => `rgba(200, 215, 240, ${o * 0.7})`,
+      flakeFar:   (o) => `rgba(180, 195, 225, ${o * 0.4})`,
+      glow:       'rgba(100, 120, 200, 0.06)',
+    },
+    light: {
+      sky:        ['#e8ecf8', '#dce4f5', '#d0d8f0'],
+      mtFar:      { top: '#c5cce6', bot: '#b8c2de' },
+      mtMid:      { top: '#adb8d8', bot: '#9daace' },
+      mtNear:     { top: '#95a2c5', bot: '#8595bb' },
+      fog:        'rgba(232, 236, 248, 0.45)',
+      snow:       'rgba(255, 255, 255, 0.9)',
+      snowCap:    '#ffffff',
+      ground:     { top: '#adb8d8', bot: '#c5cce6' },
+      groundSnow: 'rgba(255, 255, 255, 0.25)',
+      treeTrunk:  '#5a6478',
+      treeFoliage:['#3d5c3d', '#4a6b4a', '#557a55'],
+      treeSnow:   'rgba(255, 255, 255, 0.85)',
+      flakeNear:  (o) => `rgba(255, 255, 255, ${o})`,
+      flakeMid:   (o) => `rgba(220, 228, 245, ${o * 0.7})`,
+      flakeFar:   (o) => `rgba(200, 210, 235, ${o * 0.45})`,
+      glow:       'rgba(255, 255, 255, 0.15)',
+    }
+  };
+
+  // ─── Depth-layered Snowflakes ─────────────────────────────────────
   class Snowflake {
-    constructor(initial = false) {
+    constructor(layer, initial) { // layer: 0=far, 1=mid, 2=near
+      this.layer = layer;
       this.reset(initial);
     }
     reset(initial = false) {
-      this.x = Math.random() * width;
-      this.y = initial ? Math.random() * height : Math.random() * -20;
-      this.size = Math.random() * 3 + 1.5;
-      this.speed = Math.random() * 1.2 + 0.4;
-      this.opacity = Math.random() * 0.5 + 0.3;
-      this.swing = Math.random() * 1.5;
-      this.swingSpeed = Math.random() * 0.015 + 0.005;
-      this.swingOffset = Math.random() * Math.PI * 2;
+      const cfg = [
+        { minSize: 0.5, maxSize: 1.5, minSpd: 0.15, maxSpd: 0.5,  opMul: 0.35 },
+        { minSize: 1.2, maxSize: 2.5, minSpd: 0.35, maxSpd: 0.9,  opMul: 0.6  },
+        { minSize: 2.0, maxSize: 4.0, minSpd: 0.6,  maxSpd: 1.4,  opMul: 1.0  },
+      ][this.layer];
+      this.x = Math.random() * W;
+      this.y = initial ? Math.random() * H : -(Math.random() * 40 + 10);
+      this.size = Math.random() * (cfg.maxSize - cfg.minSize) + cfg.minSize;
+      this.speed = Math.random() * (cfg.maxSpd - cfg.minSpd) + cfg.minSpd;
+      this.opacity = (Math.random() * 0.4 + 0.3) * cfg.opMul;
+      this.swing = Math.random() * 0.8 + 0.2;
+      this.swingSpeed = Math.random() * 0.008 + 0.003;
+      this.phase = Math.random() * Math.PI * 2;
     }
     update() {
       this.y += this.speed;
-      this.swingOffset += this.swingSpeed;
-      this.x += Math.sin(this.swingOffset) * this.swing;
-
-      if (this.y > height || this.x < -10 || this.x > width + 10) {
-        this.reset(false);
-      }
+      this.phase += this.swingSpeed;
+      this.x += Math.sin(this.phase) * this.swing;
+      if (this.y > H + 5 || this.x < -15 || this.x > W + 15) this.reset(false);
     }
-    draw(theme) {
-      const color = theme === 'dark' 
-        ? `rgba(255, 255, 255, ${this.opacity})` 
-        : `rgba(99, 102, 241, ${this.opacity * 0.65})`;
-      ctx.fillStyle = color;
+    draw(p) {
+      const colorFn = [p.flakeFar, p.flakeMid, p.flakeNear][this.layer];
+      ctx.fillStyle = colorFn(this.opacity);
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
-  // Pre-generate tree metadata so they stay consistent on redraw/resize
-  const treeCount = 10;
-  const trees = Array.from({ length: treeCount }, (_, i) => ({
-    xPercent: 0.05 + (i * 0.9 / (treeCount - 1)) + (Math.random() * 0.04 - 0.02),
-    size: Math.random() * 30 + 40
-  }));
+  // ─── Smooth Bezier Mountain Generator ─────────────────────────────
+  // Creates natural-looking mountain silhouettes using quadratic bezier curves
+  function generateMountainPath(peaks) {
+    // peaks: [{x, y}...] — key peak/valley positions
+    const pts = peaks.map(p => ({ x: p.x * W, y: H - p.y * H }));
+    return pts;
+  }
 
-  function drawMountains(theme) {
-    const farColor = theme === 'dark' ? 'rgba(30, 27, 75, 0.4)' : 'rgba(224, 231, 255, 0.5)';
-    const nearColor = theme === 'dark' ? 'rgba(49, 46, 129, 0.45)' : 'rgba(199, 210, 254, 0.55)';
-    const snowColor = theme === 'dark' ? '#cbd5e1' : '#eff6ff';
+  function drawSmoothMountain(pts, gradTop, gradBot, snowCapColor, snowDepth) {
+    // Draw filled mountain shape with smooth bezier connections
+    const grad = ctx.createLinearGradient(0, Math.min(...pts.map(p => p.y)), 0, H);
+    grad.addColorStop(0, gradTop);
+    grad.addColorStop(1, gradBot);
+    ctx.fillStyle = grad;
 
-    // Far range
-    ctx.fillStyle = farColor;
     ctx.beginPath();
-    ctx.moveTo(0, height);
-    ctx.lineTo(0, height - 150);
-    ctx.lineTo(width * 0.2, height - 220);
-    ctx.lineTo(width * 0.4, height - 140);
-    ctx.lineTo(width * 0.65, height - 250);
-    ctx.lineTo(width * 0.85, height - 170);
-    ctx.lineTo(width, height - 210);
-    ctx.lineTo(width, height);
-    ctx.closePath();
-    ctx.fill();
+    ctx.moveTo(-10, H + 10);
+    ctx.lineTo(pts[0].x, pts[0].y);
 
-    // Far snow peaks
-    ctx.fillStyle = snowColor;
-    const farPeaks = [
-      { x: width * 0.2, y: height - 220, w: 40 },
-      { x: width * 0.65, y: height - 250, w: 55 }
-    ];
-    for (const p of farPeaks) {
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y);
-      ctx.lineTo(p.x - p.w, p.y + p.w * 0.8);
-      ctx.lineTo(p.x + p.w, p.y + p.w * 0.8);
-      ctx.closePath();
-      ctx.fill();
+    for (let i = 0; i < pts.length - 1; i++) {
+      const curr = pts[i];
+      const next = pts[i + 1];
+      const cpx = (curr.x + next.x) / 2;
+      const cpy1 = curr.y;
+      const cpy2 = next.y;
+      ctx.bezierCurveTo(cpx, cpy1, cpx, cpy2, next.x, next.y);
     }
 
-    // Near range
-    ctx.fillStyle = nearColor;
-    ctx.beginPath();
-    ctx.moveTo(0, height);
-    ctx.lineTo(0, height - 100);
-    ctx.lineTo(width * 0.3, height - 170);
-    ctx.lineTo(width * 0.55, height - 110);
-    ctx.lineTo(width * 0.8, height - 190);
-    ctx.lineTo(width, height - 120);
-    ctx.lineTo(width, height);
+    ctx.lineTo(W + 10, H + 10);
     ctx.closePath();
     ctx.fill();
 
-    // Near snow peaks
-    for (const p of [
-      { x: width * 0.3, y: height - 170, w: 35 },
-      { x: width * 0.8, y: height - 190, w: 45 }
-    ]) {
+    // Snow caps on peaks (only on local high points)
+    if (snowCapColor && snowDepth > 0) {
+      for (let i = 1; i < pts.length - 1; i++) {
+        if (pts[i].y < pts[i - 1].y && pts[i].y < pts[i + 1].y) {
+          // This is a peak
+          const px = pts[i].x;
+          const py = pts[i].y;
+          const capW = snowDepth * 2.5;
+          const capH = snowDepth;
+
+          const snowGrad = ctx.createLinearGradient(px, py, px, py + capH * 1.2);
+          snowGrad.addColorStop(0, snowCapColor);
+          snowGrad.addColorStop(1, 'transparent');
+
+          ctx.fillStyle = snowGrad;
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.bezierCurveTo(px - capW * 0.3, py + capH * 0.3, px - capW * 0.8, py + capH * 0.9, px - capW, py + capH * 1.2);
+          ctx.lineTo(px + capW, py + capH * 1.2);
+          ctx.bezierCurveTo(px + capW * 0.8, py + capH * 0.9, px + capW * 0.3, py + capH * 0.3, px, py);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+    }
+  }
+
+  // Pre-generated mountain profiles (normalized 0-1 coords)
+  const farMountain = [
+    {x:-0.05, y:0.08}, {x:0.08, y:0.18}, {x:0.18, y:0.28},
+    {x:0.30, y:0.14}, {x:0.42, y:0.24}, {x:0.55, y:0.32},
+    {x:0.68, y:0.19}, {x:0.78, y:0.27}, {x:0.90, y:0.22},
+    {x:1.05, y:0.12}
+  ];
+  const midMountain = [
+    {x:-0.05, y:0.06}, {x:0.10, y:0.15}, {x:0.25, y:0.23},
+    {x:0.38, y:0.11}, {x:0.52, y:0.20}, {x:0.62, y:0.26},
+    {x:0.75, y:0.14}, {x:0.88, y:0.22}, {x:1.05, y:0.10}
+  ];
+  const nearMountain = [
+    {x:-0.05, y:0.04}, {x:0.12, y:0.12}, {x:0.22, y:0.18},
+    {x:0.35, y:0.08}, {x:0.48, y:0.16}, {x:0.60, y:0.10},
+    {x:0.72, y:0.17}, {x:0.85, y:0.11}, {x:1.05, y:0.06}
+  ];
+
+  // ─── Organic Pine Tree ────────────────────────────────────────────
+  // Pre-generate consistent tree positions with depth layers
+  const treeData = [];
+  // Near trees (larger, darker, in front)
+  for (let i = 0; i < 8; i++) {
+    treeData.push({
+      xPct: 0.02 + (i * 0.135) + (Math.random() * 0.04 - 0.02),
+      h: Math.random() * 30 + 50,
+      tiers: Math.floor(Math.random() * 2) + 4,
+      lean: (Math.random() - 0.5) * 0.04,
+      layer: 2,
+    });
+  }
+  // Mid trees (smaller, lighter, behind)
+  for (let i = 0; i < 6; i++) {
+    treeData.push({
+      xPct: 0.06 + (i * 0.17) + (Math.random() * 0.06 - 0.03),
+      h: Math.random() * 18 + 28,
+      tiers: Math.floor(Math.random() * 2) + 3,
+      lean: (Math.random() - 0.5) * 0.02,
+      layer: 1,
+    });
+  }
+
+  function drawOrganicTree(tree, p, groundY) {
+    const x = tree.xPct * W;
+    const th = tree.h;
+    const baseY = groundY;
+
+    // Trunk: tapered rectangle
+    const trunkW = th * 0.07;
+    const trunkH = th * 0.18;
+    ctx.fillStyle = p.treeTrunk;
+    ctx.beginPath();
+    ctx.moveTo(x - trunkW, baseY);
+    ctx.lineTo(x - trunkW * 0.6, baseY - trunkH);
+    ctx.lineTo(x + trunkW * 0.6, baseY - trunkH);
+    ctx.lineTo(x + trunkW, baseY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Foliage tiers with slight organic curves
+    for (let i = 0; i < tree.tiers; i++) {
+      const t = i / tree.tiers;
+      const tierY = baseY - trunkH - (i * th * 0.18);
+      const tierW = th * (0.32 - t * 0.06);
+      const tierH = th * 0.26;
+      const lean = tree.lean * th;
+
+      // Dark foliage
+      ctx.fillStyle = p.treeFoliage[Math.min(i, p.treeFoliage.length - 1)];
       ctx.beginPath();
-      ctx.moveTo(p.x, p.y);
-      ctx.lineTo(p.x - p.w, p.y + p.w * 0.8);
-      ctx.lineTo(p.x + p.w, p.y + p.w * 0.8);
+      ctx.moveTo(x + lean, tierY - tierH);
+      ctx.bezierCurveTo(
+        x - tierW * 0.5 + lean, tierY - tierH * 0.4,
+        x - tierW, tierY + tierH * 0.1,
+        x - tierW * 0.85, tierY
+      );
+      ctx.lineTo(x + tierW * 0.85, tierY);
+      ctx.bezierCurveTo(
+        x + tierW, tierY + tierH * 0.1,
+        x + tierW * 0.5 + lean, tierY - tierH * 0.4,
+        x + lean, tierY - tierH
+      );
+      ctx.closePath();
+      ctx.fill();
+
+      // Snow draping on each tier
+      ctx.fillStyle = p.treeSnow;
+      ctx.beginPath();
+      ctx.moveTo(x + lean, tierY - tierH);
+      ctx.bezierCurveTo(
+        x - tierW * 0.3 + lean, tierY - tierH * 0.5,
+        x - tierW * 0.6, tierY - tierH * 0.15,
+        x - tierW * 0.4, tierY - tierH * 0.05
+      );
+      // Undulating snow edge
+      ctx.quadraticCurveTo(x - tierW * 0.1, tierY - tierH * 0.22, x, tierY - tierH * 0.12);
+      ctx.quadraticCurveTo(x + tierW * 0.1, tierY - tierH * 0.22, x + tierW * 0.4, tierY - tierH * 0.05);
+      ctx.bezierCurveTo(
+        x + tierW * 0.6, tierY - tierH * 0.15,
+        x + tierW * 0.3 + lean, tierY - tierH * 0.5,
+        x + lean, tierY - tierH
+      );
       ctx.closePath();
       ctx.fill();
     }
   }
 
-  function drawPineTree(x, y, treeHeight, theme) {
-    const foliageColor = theme === 'dark' ? '#0f172a' : '#1e1b4b';
-    const snowColor = theme === 'dark' ? '#cbd5e1' : '#eff6ff';
+  // ─── Ground Snow Blanket ──────────────────────────────────────────
+  function drawGroundSnow(p) {
+    const groundY = H * 0.92;
+    const grad = ctx.createLinearGradient(0, groundY - 15, 0, H);
+    grad.addColorStop(0, p.groundSnow);
+    grad.addColorStop(0.5, p.ground.top);
+    grad.addColorStop(1, p.ground.bot);
+    ctx.fillStyle = grad;
 
-    // Trunk
-    ctx.fillStyle = theme === 'dark' ? '#334155' : '#475569';
-    ctx.fillRect(x - 3, y - 8, 6, 8);
-
-    // Foliage tiers
-    for (let i = 0; i < 3; i++) {
-      const levelY = y - 8 - (i * treeHeight * 0.25);
-      const levelWidth = treeHeight * 0.25 * (1 - i * 0.22);
-      const levelHeight = treeHeight * 0.35;
-
-      ctx.fillStyle = foliageColor;
-      ctx.beginPath();
-      ctx.moveTo(x, levelY - levelHeight);
-      ctx.lineTo(x - levelWidth, levelY);
-      ctx.lineTo(x + levelWidth, levelY);
-      ctx.closePath();
-      ctx.fill();
-
-      // Snow on foliage tips
-      ctx.fillStyle = snowColor;
-      ctx.beginPath();
-      ctx.moveTo(x, levelY - levelHeight);
-      ctx.lineTo(x - levelWidth * 0.35, levelY - levelHeight + levelHeight * 0.35);
-      ctx.lineTo(x + levelWidth * 0.35, levelY - levelHeight + levelHeight * 0.35);
-      ctx.closePath();
-      ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-10, H + 10);
+    // Gentle rolling snow drifts using bezier curves
+    const driftCount = 8;
+    let cx = -10;
+    ctx.lineTo(cx, groundY + 3);
+    for (let i = 0; i < driftCount; i++) {
+      const nx = (i + 1) * (W + 20) / driftCount;
+      const midX = (cx + nx) / 2;
+      const driftH = Math.sin(i * 1.3 + 0.5) * 6 + 3;
+      ctx.quadraticCurveTo(midX, groundY - driftH, nx, groundY + (i % 2 === 0 ? 2 : -1));
+      cx = nx;
     }
+    ctx.lineTo(W + 10, H + 10);
+    ctx.closePath();
+    ctx.fill();
   }
 
-  const count = Math.min(120, Math.floor((width * height) / 10000));
-  const snowflakes = Array.from({ length: count }, () => new Snowflake(true));
+  // ─── Atmospheric Fog Layer ────────────────────────────────────────
+  function drawFogLayer(yStart, fogHeight, color) {
+    const grad = ctx.createLinearGradient(0, yStart, 0, yStart + fogHeight);
+    grad.addColorStop(0, 'transparent');
+    grad.addColorStop(0.4, color);
+    grad.addColorStop(0.6, color);
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, yStart, W, fogHeight);
+  }
 
+  // ─── Ambient Glow ─────────────────────────────────────────────────
+  function drawAmbientGlow(p) {
+    const grad = ctx.createRadialGradient(W * 0.7, H * 0.15, 0, W * 0.7, H * 0.15, H * 0.6);
+    grad.addColorStop(0, p.glow);
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // ─── Create Snowflakes ────────────────────────────────────────────
+  const totalFlakes = Math.min(180, Math.floor((W * H) / 7000));
+  const flakes = [];
+  // 40% far, 35% mid, 25% near
+  const layerSplit = [0.4, 0.35, 0.25];
+  for (let layer = 0; layer < 3; layer++) {
+    const n = Math.floor(totalFlakes * layerSplit[layer]);
+    for (let i = 0; i < n; i++) flakes.push(new Snowflake(layer, true));
+  }
+
+  // ─── Animation Loop ──────────────────────────────────────────────
   function animate() {
-    ctx.clearRect(0, 0, width, height);
-    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    ctx.clearRect(0, 0, W, H);
+    const themeKey = document.documentElement.getAttribute('data-theme') || 'light';
+    const p = palettes[themeKey] || palettes.light;
 
-    // 1. Draw Mountains
-    drawMountains(theme);
+    // 0. Ambient glow
+    drawAmbientGlow(p);
 
-    // 2. Draw Pine Trees
-    for (const tree of trees) {
-      const tx = tree.xPercent * width;
-      drawPineTree(tx, height, tree.size, theme);
-    }
+    // 1. Far snowflakes (behind everything)
+    for (const f of flakes) { if (f.layer === 0) { f.update(); f.draw(p); } }
 
-    // 3. Draw Falling Snow on top
-    for (const flake of snowflakes) {
-      flake.update();
-      flake.draw(theme);
-    }
+    // 2. Far mountains
+    drawSmoothMountain(generateMountainPath(farMountain), p.mtFar.top, p.mtFar.bot, p.snowCap, 18);
+
+    // 3. Atmospheric fog between far & mid
+    drawFogLayer(H * 0.65, H * 0.12, p.fog);
+
+    // 4. Mid snowflakes
+    for (const f of flakes) { if (f.layer === 1) { f.update(); f.draw(p); } }
+
+    // 5. Mid mountains
+    drawSmoothMountain(generateMountainPath(midMountain), p.mtMid.top, p.mtMid.bot, p.snowCap, 14);
+
+    // 6. Fog between mid & near
+    drawFogLayer(H * 0.75, H * 0.10, p.fog);
+
+    // 7. Mid trees (behind near mountains)
+    const midGroundY = H * 0.89;
+    for (const t of treeData) { if (t.layer === 1) drawOrganicTree(t, p, midGroundY); }
+
+    // 8. Near mountains
+    drawSmoothMountain(generateMountainPath(nearMountain), p.mtNear.top, p.mtNear.bot, p.snowCap, 10);
+
+    // 9. Ground snow blanket
+    drawGroundSnow(p);
+
+    // 10. Near trees (in front of ground)
+    const nearGroundY = H * 0.925;
+    for (const t of treeData) { if (t.layer === 2) drawOrganicTree(t, p, nearGroundY); }
+
+    // 11. Near snowflakes (in front of everything)
+    for (const f of flakes) { if (f.layer === 2) { f.update(); f.draw(p); } }
 
     requestAnimationFrame(animate);
   }
 
   window.addEventListener('resize', () => {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
+    width = canvas.width = window.innerWidth * devicePixelRatio;
+    height = canvas.height = window.innerHeight * devicePixelRatio;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    W = window.innerWidth;
+    H = window.innerHeight;
   });
 
   animate();
