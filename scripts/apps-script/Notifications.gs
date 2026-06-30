@@ -439,7 +439,7 @@ function _buildNoLogReminderHtml(email, lastLogged) {
     '<h2 style="color:#1e293b;margin:0 0 12px;">Expense Logging Reminder</h2>' +
     '<p style="color:#374151;font-size:15px;">' + lastLoggedText + '</p>' +
     '<p style="color:#374151;font-size:15px;">It takes less than 10 seconds. Keep your budget picture accurate!</p>' +
-    '<a href="https://prashant228.github.io/budget-tracker-app" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#3b82f6;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Open BudgetPulse &rarr;</a>'
+    '<a href="https://pt228t.github.io/budget-tracker-app" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#3b82f6;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Open BudgetPulse &rarr;</a>'
   );
 }
 

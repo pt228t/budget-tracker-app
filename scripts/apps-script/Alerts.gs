@@ -229,6 +229,6 @@ function _buildAlertHtml(catName, catId, spent, budget, pct, month) {
     '</div>' +
 
     '<p style="font-size:14px;color:#64748b;">Log expenses carefully for the rest of the month, or consider reviewing your budget for this category.</p>' +
-    '<a href="https://prashant228.github.io/budget-tracker-app" style="display:inline-block;margin-top:12px;padding:12px 24px;background:#3b82f6;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Open BudgetPulse →</a>'
+    '<a href="https://pt228t.github.io/budget-tracker-app" style="display:inline-block;margin-top:12px;padding:12px 24px;background:#3b82f6;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Open BudgetPulse →</a>'
   );
 }

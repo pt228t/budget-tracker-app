@@ -15,6 +15,21 @@ This project uses 3 parallel agents (AGY, Claude, Codex). That file defines:
 
 ---
 
+## Fast Path / Token Discipline
+
+Use the shortest path that can prove the answer.
+
+1. If the target file, test, or error location is already known, open that exact file or run that exact test first.
+2. Do not start with broad repo scans when a specific path is already available.
+3. If `codebase-memory-mcp` or any discovery MCP fails twice, stop retrying and fall back to direct file reads.
+4. If `rtk` compresses code or test output too aggressively, switch immediately to a raw targeted command for that one read.
+5. Prefer narrow reads such as `sed -n '120,170p' file` and focused test runs over multi-file searches.
+6. For failing tests, use machine-readable output early, such as `vitest --reporter=json`, before repeating full runs.
+7. Do not use screenshots or image rendering to read source files unless normal text output is genuinely blocked.
+8. Before adding another search step, state the concrete unknown. If there is no concrete unknown, stop searching and edit or test.
+
+---
+
 ## Part 1: Coding Guidelines (Karpathy & TDD)
 
 ### 1. Test-Driven Development (TDD)
