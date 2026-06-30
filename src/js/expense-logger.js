@@ -674,11 +674,16 @@ async function _handleDelete(txnId, itemEl) {
 
 function _handleEdit(txnId, itemEl) {
   const month = itemEl.dataset.month || _getCurrentMonth();
-  const cachedRows = getTransactionsCache(month) || [];
-  const row = cachedRows.find(r => String(r[0]) === String(txnId));
+
+  // Search both cache (for optimistically-added txns) and loaded transactions
+  let row = (_allLoadedTransactions || []).find(r => String(r[TC.ID]) === String(txnId));
+  if (!row) {
+    const cachedRows = getTransactionsCache(month) || [];
+    row = cachedRows.find(r => String(r[0]) === String(txnId));
+  }
 
   if (!row) {
-    _showToast('Cannot edit: data not in cache. Reload page.');
+    _showToast('Cannot edit: transaction not found.');
     return;
   }
 
