@@ -209,6 +209,70 @@
 .toast-success { border-left: 4px solid var(--color-status-success); }
 .toast-error { border-left: 4px solid var(--color-status-danger); }
 
+/* Transaction Edit Modal */
+.txn-edit-modal {
+  max-width: 440px;
+}
+
+.txn-edit-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.txn-edit-modal__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.txn-edit-form .form-group {
+  margin-bottom: var(--space-4);
+}
+
+.txn-edit-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.form-label__optional {
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  font-size: 0.8em;
+}
+
+.txn-edit-form__actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  margin-top: var(--space-5);
+}
+
+/* Native date control: keep it tappable and full-width on mobile. */
+.txn-edit-form input[type="date"] {
+  width: 100%;
+  min-height: 44px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.txn-edit-form input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+@media (max-width: 480px) {
+  .txn-edit-form__row {
+    grid-template-columns: 1fr;
+  }
+  .txn-edit-form__actions .btn {
+    flex: 1;
+  }
+}
+
 /* Scrollable Container */
 .scroll-container {
   max-height: 480px;

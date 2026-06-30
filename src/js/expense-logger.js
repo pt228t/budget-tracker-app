@@ -692,52 +692,76 @@ function _handleEdit(txnId, itemEl) {
     .map(([id, name]) => `<option value="${_esc(id)}"${id === String(row[TC.CATEGORY_ID]) ? ' selected' : ''}>${_esc(name)}</option>`)
     .join('');
 
-  itemEl.innerHTML = `
-    <form class="txn-edit-form" style="width:100%;padding:4px 0;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-        <div>
-          <label class="form-label" style="font-size:0.75rem;">Amount</label>
-          <input class="form-control" name="amount" type="number" value="${Number(row[TC.AMOUNT])}" min="0.01" step="0.01" required style="height:32px;" />
-        </div>
-        <div>
-          <label class="form-label" style="font-size:0.75rem;">Date</label>
-          <input class="form-control" name="date" type="date" value="${_esc(String(row[TC.DATE]))}" required style="height:32px;" />
-        </div>
-        <div>
-          <label class="form-label" style="font-size:0.75rem;">Category</label>
-          <select class="form-control" name="categoryId" style="height:32px;">${categoryOptions}</select>
-        </div>
-        <div>
-          <label class="form-label" style="font-size:0.75rem;">Description</label>
-          <input class="form-control" name="description" type="text" value="${_esc(String(row[TC.DESCRIPTION]))}" required style="height:32px;" />
-        </div>
-        <div>
-          <label class="form-label" style="font-size:0.75rem;">Sub-category</label>
-          <input class="form-control" name="subCategory" type="text" value="${_esc(String(row[TC.SUB_CATEGORY] || ''))}" style="height:32px;" />
-        </div>
+  // Render a real modal overlay on the body — escapes the cramped flex row
+  // that made inline editing unusable.
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-content txn-edit-modal" role="dialog" aria-modal="true" aria-label="Edit expense">
+      <div class="txn-edit-modal__header">
+        <h3 class="txn-edit-modal__title">Edit expense</h3>
+        <button type="button" class="btn-icon" data-action="close" aria-label="Close">✕</button>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <button type="button" class="btn btn-xs" data-action="cancel-edit">Cancel</button>
-        <button type="submit" class="btn btn-xs btn-primary">Save</button>
-      </div>
-    </form>
+      <form class="txn-edit-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="edit-description">Description</label>
+          <input class="form-control" id="edit-description" name="description" type="text" value="${_esc(String(row[TC.DESCRIPTION]))}" required />
+        </div>
+        <div class="txn-edit-form__row">
+          <div class="form-group">
+            <label class="form-label" for="edit-amount">Amount</label>
+            <input class="form-control" id="edit-amount" name="amount" type="number" value="${Number(row[TC.AMOUNT])}" min="0.01" step="0.01" inputmode="decimal" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit-date">Date</label>
+            <input class="form-control" id="edit-date" name="date" type="date" value="${_esc(_normalizeDate(row[TC.DATE]))}" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-category">Category</label>
+          <select class="form-control" id="edit-category" name="categoryId">${categoryOptions}</select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-subcategory">Sub-category <span class="form-label__optional">(optional)</span></label>
+          <input class="form-control" id="edit-subcategory" name="subCategory" type="text" value="${_esc(String(row[TC.SUB_CATEGORY] || ''))}" />
+        </div>
+        <div class="txn-edit-form__actions">
+          <button type="button" class="btn btn-outline" data-action="close">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+      </form>
+    </div>
   `;
 
-  const form = itemEl.querySelector('form');
+  document.body.appendChild(overlay);
+  // Trigger transition (active class drives opacity + slide-in).
+  requestAnimationFrame(() => overlay.classList.add('active'));
 
-  form.querySelector('[data-action="cancel-edit"]').addEventListener('click', () => {
-    const restored = document.createElement('div');
-    restored.innerHTML = renderTransactionItem(row, _buildCategoryMap());
-    itemEl.replaceWith(restored.firstElementChild);
+  const form = overlay.querySelector('form');
+
+  const close = () => {
+    overlay.classList.remove('active');
+    document.removeEventListener('keydown', onKey);
+    setTimeout(() => overlay.remove(), 200);
+  };
+
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+
+  // Backdrop click + close buttons.
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay || e.target.closest('[data-action="close"]')) close();
   });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    await _handleEditSave(txnId, row, form, itemEl);
+    await _handleEditSave(txnId, row, form, itemEl, close);
   });
+
+  overlay.querySelector('#edit-description').focus();
 }
 
-async function _handleEditSave(txnId, originalRow, form, itemEl) {
+async function _handleEditSave(txnId, originalRow, form, itemEl, close) {
   const saveBtn = form.querySelector('[type="submit"]');
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving…';
@@ -752,7 +776,7 @@ async function _handleEditSave(txnId, originalRow, form, itemEl) {
   if (!valid) {
     _showToast(errors[0].message);
     saveBtn.disabled = false;
-    saveBtn.textContent = 'Save';
+    saveBtn.textContent = 'Save changes';
     return;
   }
 
@@ -792,14 +816,25 @@ async function _handleEditSave(txnId, originalRow, form, itemEl) {
     restored.innerHTML = renderTransactionItem(updatedRow, _buildCategoryMap());
     itemEl.replaceWith(restored.firstElementChild);
 
+    if (typeof close === 'function') close();
     _showToast('Expense updated ✓');
 
   } catch (err) {
     saveBtn.disabled = false;
-    saveBtn.textContent = 'Save';
+    saveBtn.textContent = 'Save changes';
     console.error('[BudgetPulse] Edit save failed:', err);
     _showToast('Save failed. Try again.');
   }
+}
+
+// Coerce stored date into the YYYY-MM-DD form <input type="date"> requires.
+// Sheet reads can return ISO timestamps or other formats that the input
+// silently rejects (blank field, dead calendar).
+function _normalizeDate(value) {
+  const str = String(value ?? '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? '' : _toDateString(d);
 }
 
 function _getCurrentMonth() {
