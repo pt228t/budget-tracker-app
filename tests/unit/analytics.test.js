@@ -95,8 +95,8 @@ describe('filterByMonth', () => {
 
   it('filters out future-dated transactions', () => {
     const rows = [
-      ['tx_past', '2026-06-28', '2026-06', '100', 'Cat1', '', ''],
-      ['tx_future', '2026-06-30', '2026-06', '200', 'Cat1', '', ''],
+      ['tx_past', '2026-06-30', '2026-06', '100', 'Cat1', '', ''],
+      ['tx_future', '2026-07-01', '2026-07', '200', 'Cat1', '', ''],
     ];
     const result = filterByMonth(rows, '2026-06');
     expect(result).toHaveLength(1);
@@ -123,11 +123,11 @@ describe('getUpcomingForMonth', () => {
 
   it('counts and sums month rows dated after today', () => {
     const rows = [
-      ['tx_past',   '2026-06-28', '2026-06', '100', 'Cat1', '', ''],
-      ['tx_future', '2026-06-30', '2026-06', '200', 'Cat1', '', ''],
-      ['tx_fut2',   '2026-06-30', '2026-06', '50',  'Cat2', '', ''],
+      ['tx_past',   '2026-06-30', '2026-06', '100', 'Cat1', '', ''],
+      ['tx_future', '2026-07-01', '2026-07', '200', 'Cat1', '', ''],
+      ['tx_fut2',   '2026-07-02', '2026-07', '50',  'Cat2', '', ''],
     ];
-    const result = getUpcomingForMonth(rows, '2026-06');
+    const result = getUpcomingForMonth(rows, '2026-07');
     expect(result.count).toBe(2);
     expect(result.total).toBe(250);
   });
