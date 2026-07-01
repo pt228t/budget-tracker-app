@@ -23,7 +23,8 @@ describe('renderPersonalSettlement', () => {
   it('renders correct debt transfers for 50/50 split', () => {
     const today = new Date();
     const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    const dateStr = `${currentMonth}-15`;
+    // Use the 1st of the current month — always <= today regardless of when tests run
+    const dateStr = `${currentMonth}-01`;
 
     const transactions = [
       ['transaction_id', 'date', 'month', 'amount', 'category_id', 'sub_category', 'description', 'paid_by', 'funding_source'],
