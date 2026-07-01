@@ -365,6 +365,31 @@ function _buildWeeklySummaryHtml(data) {
     '</tr>';
   }).join('');
 
+  // Budget vs Actual visual chart (CSS bars, email-compatible)
+  var maxBudget = data.categoryStats.reduce(function(m, c) { return Math.max(m, c.budget); }, 1);
+  var bvaRows = data.categoryStats.map(function(c) {
+    var budgetPct = Math.min((c.budget / maxBudget) * 100, 100).toFixed(0);
+    var actualPct = Math.min((c.spent / maxBudget) * 100, 100).toFixed(0);
+    var spentColor = c.remaining >= 0 ? '#3b82f6' : '#dc2626';
+    return '<tr>' +
+      '<td style="padding:6px 8px;font-size:13px;width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + _esc(c.name) + '</td>' +
+      '<td style="padding:6px 8px;width:280px;">' +
+        '<div style="margin-bottom:3px;">' +
+          '<div style="background:#dbeafe;border-radius:3px;height:12px;width:100%;">' +
+            '<div style="background:#3b82f6;width:' + budgetPct + '%;height:12px;border-radius:3px;"></div>' +
+          '</div>' +
+          '<span style="font-size:11px;color:#64748b;">Budget: ' + formatINR(c.budget) + '</span>' +
+        '</div>' +
+        '<div>' +
+          '<div style="background:#fee2e2;border-radius:3px;height:12px;width:100%;">' +
+            '<div style="background:' + spentColor + ';width:' + actualPct + '%;height:12px;border-radius:3px;"></div>' +
+          '</div>' +
+          '<span style="font-size:11px;color:' + spentColor + ';">Actual: ' + formatINR(c.spent) + '</span>' +
+        '</div>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+
   return _htmlWrap('BudgetPulse - Weekly Summary ' + data.month,
     '<h2 style="color:#1e293b;margin:0 0 16px;">Weekly Summary - ' + _esc(data.month) + '</h2>' +
 
@@ -375,6 +400,11 @@ function _buildWeeklySummaryHtml(data) {
         _summaryCard('Remaining', formatINR(data.remaining), data.remaining >= 0 ? '#16a34a' : '#dc2626') +
         _summaryCard('Savings Rate', data.savingsRate + '%', '#8b5cf6') +
       '</tr>' +
+    '</table>' +
+
+    '<h3 style="color:#374151;margin:0 0 12px;">Budget vs Actual</h3>' +
+    '<table style="width:100%;border-collapse:collapse;font-family:sans-serif;margin-bottom:24px;">' +
+      '<tbody>' + bvaRows + '</tbody>' +
     '</table>' +
 
     '<h3 style="color:#374151;margin:0 0 12px;">Category Health</h3>' +

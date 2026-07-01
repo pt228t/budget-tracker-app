@@ -1,4 +1,15 @@
 import { readRange } from './sheets-api.js';
+import { formatCurrencyINR } from '../../utils.js';
+
+const _fmtINR = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val || 0);
+const _tooltipINR = {
+    callbacks: {
+        label: function(context) {
+            const val = context.parsed.y !== undefined ? context.parsed.y : context.parsed;
+            return ' ' + _fmtINR(val);
+        }
+    }
+};
 
 export async function initAnalytics(containerId) {
     const container = document.getElementById(containerId);
@@ -37,17 +48,25 @@ export async function initAnalytics(containerId) {
             return;
         }
 
-        const expensesByCategory = calculateExpensesByCategory(txRows);
+        // Build id→name map for resolving category IDs stored in transactions
+        const catMap = {};
+        for (const row of catRows) {
+            if (row[0]) catMap[String(row[0]).trim()] = String(row[1] ?? '').trim();
+        }
+
+        const rawExpensesByCategory = calculateExpensesByCategory(txRows);
+        // Resolve category IDs to display names (new txns store IDs; legacy stored names)
+        const expensesByCategory = {};
+        for (const [key, val] of Object.entries(rawExpensesByCategory)) {
+            const name = catMap[key] || key;
+            expensesByCategory[name] = (expensesByCategory[name] || 0) + val;
+        }
+
         const budgetVsActual = calculateBudgetVsActual(txRows, catRows);
         const topExpenses = getTopExpenses(txRows);
         const dayOfWeekData = calculateDayOfWeekData(txRows);
         const personSplitData = calculatePersonSplitData(txRows);
 
-        // Map category IDs to names for the top expenses display
-        const catMap = {};
-        for (const row of catRows) {
-            catMap[row[0]] = row[1];
-        }
         const topExpensesWithNames = topExpenses.map(exp => ({
             ...exp,
             categoryId: catMap[exp.categoryId] || exp.categoryId
@@ -58,18 +77,18 @@ export async function initAnalytics(containerId) {
         container.innerHTML = `
             ${upcomingBanner}
             <div class="analytics-charts" style="display: flex; gap: 20px; margin-bottom: 30px; justify-content: center; flex-wrap: wrap;">
-                <div style="width: 400px; max-width: 100%;">
+                <div style="width: 440px; max-width: 100%;">
                     <canvas id="categoryDonutChart"></canvas>
                 </div>
-                <div style="width: 500px; max-width: 100%;">
+                <div style="width: 440px; max-width: 100%;">
                     <canvas id="budgetBarChart"></canvas>
                 </div>
             </div>
             <div class="analytics-charts-row2" style="display: flex; gap: 20px; margin-bottom: 30px; justify-content: center; flex-wrap: wrap; align-items: stretch; width: 100%;">
-                <div style="width: 400px; max-width: 100%;">
+                <div style="width: 440px; max-width: 100%;">
                     <canvas id="personSplitChart"></canvas>
                 </div>
-                <div class="heatmap-card card" style="width: 500px; max-width: 100%; display: flex; flex-direction: column; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md, 8px); background: var(--color-bg-surface); box-sizing: border-box;">
+                <div class="heatmap-card card" style="width: 440px; max-width: 100%; display: flex; flex-direction: column; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md, 8px); background: var(--color-bg-surface); box-sizing: border-box;">
                     <h3 style="text-align: center; margin-top: 0; margin-bottom: 16px; font-size: 1rem; color: var(--color-text-primary); font-weight: 600;">Day-of-Week Spending Heatmap</h3>
                     <div id="dayOfWeekHeatmap" class="heatmap-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; flex-grow: 1; align-items: stretch;">
                     </div>
@@ -183,14 +202,15 @@ export function calculateBudgetVsActual(txRows, catRows) {
     const categories = [];
 
     for (const row of catRows) {
-        const catId = row[0];
-        const name = row[1];
+        const catId = String(row[0] ?? '').trim();
+        const name = String(row[1] ?? '').trim();
         const budget = parseFloat(row[2]) || 0;
+        // Dual-key lookup: new transactions store category_id; legacy stored category name
         categories.push({
             id: catId,
             name: name || catId,
             budget,
-            actual: actuals[catId] || 0
+            actual: actuals[catId] || actuals[name] || 0
         });
     }
     return categories;
@@ -273,6 +293,7 @@ export function renderPersonSplitChart(canvasId, personSplitData) {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: true,
                 plugins: {
                     title: {
                         display: true,
@@ -288,7 +309,8 @@ export function renderPersonSplitChart(canvasId, personSplitData) {
                         labels: {
                             color: 'var(--color-text-secondary)'
                         }
-                    }
+                    },
+                    tooltip: _tooltipINR
                 }
             }
         });
@@ -318,11 +340,13 @@ export function renderCategoryDonutChart(canvasId, expensesByCategory) {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: true,
                 plugins: {
                     title: {
                         display: true,
                         text: 'Expenses by Category'
-                    }
+                    },
+                    tooltip: _tooltipINR
                 }
             }
         });
@@ -359,15 +383,20 @@ export function renderBudgetBarChart(canvasId, budgetVsActual) {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: true,
                 plugins: {
                     title: {
                         display: true,
                         text: 'Budget vs Actual'
-                    }
+                    },
+                    tooltip: _tooltipINR
                 },
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (v) => _fmtINR(v)
+                        }
                     }
                 }
             }
@@ -390,7 +419,7 @@ export function renderTopExpensesTable(tableId, topExpenses) {
         <tr>
             <td style="text-align: left;">${exp.date || ''}</td>
             <td style="text-align: left;">${exp.description || ''}</td>
-            <td style="text-align: right;">${exp.amount.toFixed(2)}</td>
+            <td style="text-align: right;">${_fmtINR(exp.amount)}</td>
             <td style="text-align: left;">${exp.categoryId || ''}</td>
         </tr>
     `).join('');
@@ -410,25 +439,27 @@ export function calculateMoMData(allTxRows, catRows, bhRows) {
         }
     }
 
-    // 2. Group budget history by month/category
-    const budgetsByMonth = {};
-    // Sum default budgets from catRows as fallback
+    // 2. Group budget history by month — deduplicate per (month, catId) to avoid
+    //    double-counting when sync has run multiple times for the same month.
     const defaultTotalBudget = catRows.reduce((sum, row) => {
         const budget = parseFloat(row[2]) || 0;
         const status = String(row[5] ?? '').trim();
-        // Only sum Active categories
-        if (status === 'Active') {
-            return sum + budget;
-        }
-        return sum;
+        return status === 'Active' ? sum + budget : sum;
     }, 0);
 
+    const budgetsByMonthCat = {};
     for (const row of bhRows) {
         const month = String(row[0] ?? '').trim();
+        const catId = String(row[1] ?? '').trim();
         const amount = parseFloat(row[2]) || 0;
         if (month && month.match(/^\d{4}-\d{2}$/)) {
-            budgetsByMonth[month] = (budgetsByMonth[month] || 0) + amount;
+            if (!budgetsByMonthCat[month]) budgetsByMonthCat[month] = {};
+            budgetsByMonthCat[month][catId] = amount; // last-wins per (month, catId)
         }
+    }
+    const budgetsByMonth = {};
+    for (const [month, catMap] of Object.entries(budgetsByMonthCat)) {
+        budgetsByMonth[month] = Object.values(catMap).reduce((s, v) => s + v, 0);
     }
 
     // Get list of unique months in transactions and budget history
@@ -504,15 +535,20 @@ export function renderMoMChart(canvasId, momData) {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: true,
                 plugins: {
                     title: {
                         display: true,
                         text: 'Month-over-Month Spending Trend'
-                    }
+                    },
+                    tooltip: _tooltipINR
                 },
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (v) => _fmtINR(v)
+                        }
                     }
                 }
             }

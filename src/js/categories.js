@@ -5,6 +5,7 @@ import {
   getSubCategoriesCache,
   setSubCategoriesCache,
 } from './cache.js';
+import { formatCurrencyINR } from '../../utils.js';
 
 const CATEGORY_RANGE = 'Budget_Categories!A:H';
 const SUB_CATEGORY_RANGE = 'Sub_Categories!A:C';
@@ -182,8 +183,8 @@ export function renderCategoryHealthMarkup(categories = [], limit = 100) {
             ></div>
           </div>
           <div class="flex justify-between mt-2 text-secondary">
-            <span>Spent ${model.spent}</span>
-            <span>Left ${model.remaining}</span>
+            <span>Spent ${formatCurrencyINR(model.spent)}</span>
+            <span class="${model.remaining < 0 ? 'text-critical' : ''}">${model.remaining < 0 ? `${formatCurrencyINR(Math.abs(model.remaining))} over` : `${formatCurrencyINR(model.remaining)} left`}</span>
           </div>
         </li>
       `
@@ -193,9 +194,8 @@ export function renderCategoryHealthMarkup(categories = [], limit = 100) {
 
 export function renderCategoryOptionsMarkup(categories = []) {
   return categories
-    .map((category) => category.category)
-    .filter(Boolean)
-    .map((categoryName) => `<option value="${categoryName}">${categoryName}</option>`)
+    .filter((category) => category.category)
+    .map((category) => `<option value="${category.category_id || category.category}">${category.category}</option>`)
     .join('');
 }
 
@@ -258,9 +258,10 @@ export async function loadCategoryBundle(options = {}) {
   }
 
   // Merge actual spent into categories
+  // Dual-key lookup: new transactions store category_id, legacy ones stored category name
   const enrichedCategories = categories.map(cat => {
-    const spent = actuals[cat.category_id] || 0;
-    const remaining = Math.max((cat.monthlyBudget || 0) - spent, 0);
+    const spent = actuals[cat.category_id] || actuals[cat.category] || 0;
+    const remaining = (cat.monthlyBudget || 0) - spent; // unclamped — negative = over-budget
     const utilization = cat.monthlyBudget > 0 ? spent / cat.monthlyBudget : 0;
     return {
       ...cat,
